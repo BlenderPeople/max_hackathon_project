@@ -1,0 +1,1 @@
+"""MAX order backend application."""
