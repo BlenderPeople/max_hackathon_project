@@ -1,0 +1,33 @@
+:root {
+  color: #1f2937;
+  background: #f6f7f9;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+
+.app-shell {
+  max-width: 680px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 48px 24px;
+}
+
+.eyebrow { color: #4c6fff; font-weight: 700; margin: 0 0 8px; }
+h1 { margin: 0 0 16px; font-size: clamp(28px, 8vw, 42px); }
+p { line-height: 1.55; }
+
+.launch-info { margin-top: 32px; }
+.launch-info div { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-top: 1px solid #dfe3ea; }
+dt { color: #667085; }
+dd { margin: 0; font-weight: 600; }
+
+.page-state {
+  padding: 24px;
+  border: 1px solid #dfe3ea;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.page-state h2 { margin: 0 0 8px; }
