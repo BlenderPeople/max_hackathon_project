@@ -172,7 +172,7 @@ MAX client
 
 ### Базовые состояния
 
-- заказ: `new`, `in_progress`, `completed`, `cancelled`;
+- заказ API: `new`, `approval`, `in_progress`, `done`;
 - этап: `pending`, `current`, `done`;
 - подтверждение: `pending`, `approved`, `rejected`.
 
@@ -186,28 +186,28 @@ MAX client
 ### Услуги и мастер
 
 - `GET /api/services/{public_token}`;
-- `GET /api/businesses/{id}`;
-- `GET /api/businesses/{id}/services`;
+- `GET /api/businesses/{public_token}`;
+- `GET /api/businesses/{public_token}/services`;
 - `POST /api/services`;
-- `PATCH /api/services/{id}`.
+- `PATCH /api/services/{public_token}`.
 
 ### Заказы
 
 - `GET /api/orders?filter=attention|active|overdue|completed`;
 - `POST /api/orders`;
 - `GET /api/orders/{public_token}`;
-- `PATCH /api/orders/{id}`;
-- `POST /api/orders/{id}/stages/{stage_id}/activate`;
-- `POST /api/orders/{id}/complete`;
-- `GET /api/orders/{id}/events`.
+- `PATCH /api/orders/{public_token}`;
+- `POST /api/orders/{public_token}/stages/{stage_token}/activate`;
+- `POST /api/orders/{public_token}/complete`;
+- `GET /api/orders/{public_token}/events`.
 
 ### Подтверждения, оплаты, файлы
 
-- `POST /api/orders/{id}/approvals`;
-- `POST /api/approvals/{id}/decision`;
-- `POST /api/orders/{id}/payments`;
-- `POST /api/orders/{id}/files`;
-- `GET /api/files/{id}/download`.
+- `POST /api/orders/{public_token}/approvals`;
+- `POST /api/approvals/{approval_token}/decision`;
+- `POST /api/orders/{public_token}/payments`;
+- `POST /api/orders/{public_token}/files`;
+- `GET /api/files/{file_token}/download`.
 
 ### MAX
 

@@ -72,6 +72,12 @@ def test_signed_login_order_permissions_and_booking_flow() -> None:
             })
             assert service_response.status_code == 201, service_response.text
             service_token = service_response.json()["public_token"]
+            business_token = http.get("/api/businesses/me", headers=master).json()["public_token"]
+            # Public business handles use the same opaque token convention as services/orders.
+            public_business = http.get(f"/api/businesses/{business_token}")
+            assert public_business.status_code == 200
+            public_services = http.get(f"/api/businesses/{business_token}/services")
+            assert public_services.status_code == 200 and public_services.json()[0]["public_token"] == service_token
             assert http.post("/api/services", headers=customer, json={
                 "title": "Осмотр", "description": "", "price_from": "100.00", "duration_minutes": 60,
             }).status_code == 201

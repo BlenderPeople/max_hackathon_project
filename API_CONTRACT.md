@@ -10,23 +10,28 @@
 | --- | --- | --- |
 | POST | `/api/auth/max` | Валидация подписанного `initData`, короткая сессия |
 | GET | `/api/me` | Пользователь и возможности |
+| GET | `/api/businesses/{public_token}` | Публичный профиль мастера |
+| GET | `/api/businesses/{public_token}/services` | Активные услуги мастера |
 | GET | `/api/services/{public_token}` | Карточка услуги для диплинка |
 | POST | `/api/orders` | Создание заказа клиентом или мастером |
 | GET | `/api/orders/{public_token}` | Единая ролевая карточка заказа |
-| PATCH | `/api/orders/{id}` | Разрешённое редактирование заказа |
-| POST | `/api/orders/{id}/stages/{stage_id}/activate` | Смена этапа |
-| GET | `/api/orders/{id}/events` | Timeline |
+| PATCH | `/api/orders/{public_token}` | Разрешённое редактирование заказа |
+| POST | `/api/orders/{public_token}/stages/{stage_token}/activate` | Смена этапа |
+| GET | `/api/orders/{public_token}/events` | Timeline |
 | GET | `/api/orders?filter=all\|attention\|active\|overdue\|completed` | Список заказов |
-| POST | `/api/orders/{id}/approvals` | Запрос согласования владельцем |
-| POST | `/api/approvals/{id}/decision` | Решение клиента `{ "approved": true/false }` |
-| POST | `/api/orders/{id}/payments` | Ручная оплата `{ "amount": "2000.00", "comment": "Предоплата" }` |
-| POST | `/api/orders/{id}/complete` | Завершение после всех этапов |
-| GET | `/api/services/{id}/availability?date=YYYY-MM-DD` | Свободные слоты |
+| POST | `/api/orders/{public_token}/approvals` | Запрос согласования владельцем |
+| POST | `/api/approvals/{approval_token}/decision` | Решение клиента `{ "approved": true/false }` |
+| POST | `/api/orders/{public_token}/payments` | Ручная оплата `{ "amount": "2000.00", "comment": "Предоплата" }` |
+| POST | `/api/orders/{public_token}/complete` | Завершение после всех этапов |
+| GET | `/api/services/{public_token}/availability?date=YYYY-MM-DD` | Свободные слоты |
 | GET/PUT | `/api/businesses/me/schedule` | Расписание мастера |
 | GET/PATCH | `/api/businesses/me` | Профиль мастера |
-| POST/PATCH | `/api/services` и `/api/services/{id}` | Услуги мастера |
+| POST/PATCH | `/api/services` и `/api/services/{public_token}` | Услуги мастера |
 | POST | `/api/orders/{public_token}/files` | Загрузить один файл (multipart, поле `file`) |
 | GET | `/api/files/{file_token}/download` | Скачать файл участнику заказа |
+
+Все перечисленные ручки находятся под `/api`. Единственное исключение —
+`POST /webhooks/max`, потому что MAX вызывает webhook без API-префикса.
 
 ## Правила данных
 

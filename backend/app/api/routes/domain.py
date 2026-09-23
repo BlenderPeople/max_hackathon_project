@@ -16,7 +16,7 @@ from app.services.auth import create_session, current_user, validate_init_data
 from app.services.domain import (
     ZERO, actions_for, add_event, business_for, business_view, create_order, is_overdue,
     latest_approval, money, order_view, paid_amount, require_owner, schedule_view,
-    service_details, slots_for, validate_schedule, visible_order,
+    service_details, service_view, slots_for, validate_schedule, visible_order,
 )
 
 router = APIRouter(tags=["domain"])
@@ -53,6 +53,22 @@ def update_business(body: BusinessInput, db: Session = Depends(get_db_session), 
     business.avatar_url = body.avatar_data_url
     db.commit()
     return business_view(db, business)
+
+
+@router.get("/businesses/{public_token}")
+def get_business(public_token: str, db: Session = Depends(get_db_session)) -> dict:
+    business = db.scalar(select(Business).where(Business.public_token == public_token))
+    if business is None:
+        raise HTTPException(status_code=404, detail="business not found")
+    return business_view(db, business)
+
+
+@router.get("/businesses/{public_token}/services")
+def get_business_services(public_token: str, db: Session = Depends(get_db_session)) -> list[dict]:
+    business = db.scalar(select(Business).where(Business.public_token == public_token))
+    if business is None:
+        raise HTTPException(status_code=404, detail="business not found")
+    return [service_view(service) for service in business.services if service.is_active]
 
 
 @router.get("/businesses/me/schedule", response_model=ScheduleView)
