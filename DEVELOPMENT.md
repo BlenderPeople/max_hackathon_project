@@ -2,19 +2,19 @@
 
 ## Быстрый старт
 
-1. Скопируйте `.env.example` в `.env` и задайте локальные значения.
+1. Скопируйте `.env.example` в `.env`: `cp .env.example .env` (PowerShell:
+   `Copy-Item .env.example .env`). Для локального mock-режима менять значения
+   не требуется.
 2. Выполните `docker compose up --build`.
-3. Примените схему и создайте демо-данные:
-
-   ```bash
-   docker compose exec api alembic upgrade head
-   docker compose exec api python -m app.seed
-   ```
-
-   Seed повторяемый. Для входа под демо-мастером/клиентом укажите реальные MAX
-   ID в `DEMO_MASTER_MAX_ID` и `DEMO_CUSTOMER_MAX_ID` до запуска seed.
+3. API сам применит миграции и создаст демо-данные при первом запуске.
+   Повторный запуск не перезаписывает изменённый профиль мастера. Если
+   демо-данные не нужны, установите `SEED_DEMO_DATA=0` в `.env`.
 4. Откройте <http://localhost:5173> и проверьте <http://localhost:8000/api/healthz>.
 5. OpenAPI доступен по <http://localhost:8000/api/docs>.
+
+Для входа под демо-мастером/клиентом в реальном MAX укажите их MAX ID в
+`DEMO_MASTER_MAX_ID` и `DEMO_CUSTOMER_MAX_ID` **до первого запуска**. Обычное
+открытие `localhost` не даёт подписанный `initData` и не включает real-режим.
 
 Для подключения UI к backend установите `VITE_API_MODE=real` в `.env` и откройте
 Mini App из MAX: сервер принимает только подписанный `initData`. Без этого
@@ -23,8 +23,7 @@ Mini App из MAX: сервер принимает только подписан
 PostgreSQL доступен сервису `api` по имени `db` внутри Docker-сети; порт БД на
 хосте не публикуется, чтобы не конфликтовать с другими локальными базами.
 
-После обновления backend примените новую миграцию:
-`docker compose exec api alembic upgrade head`. Для уведомлений укажите рабочий
+После обновления backend миграции применяются при старте API. Для уведомлений укажите рабочий
 `MAX_BOT_TOKEN` и запустите `docker compose --profile notifications up -d notifications`.
 Отправка идёт после фиксации события заказа в БД. При временной ошибке worker
 повторяет попытку; после пяти неудач запись остаётся со статусом `failed` для

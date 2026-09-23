@@ -27,10 +27,6 @@ def seed() -> None:
                                 specialization="Арбористика и уход за садом")
             db.add(business)
             db.flush()
-        else:
-            business.name = "Зелёный двор"
-            business.description = "Уход за деревьями и садом"
-            business.specialization = "Арбористика и уход за садом"
         service = db.scalar(select(Service).where(Service.business_id == business.id, Service.title == "Обрезка деревьев"))
         if service is None:
             service = Service(business=business, title="Обрезка деревьев", description="Обрезка плодовых деревьев",

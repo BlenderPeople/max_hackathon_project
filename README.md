@@ -14,10 +14,15 @@ MVP Mini App для заказа услуг внутри MAX. Клиент от�
 
 ## Быстрый старт
 
-```powershell
-Copy-Item .env.example .env
+```bash
+cp .env.example .env
 docker compose up --build
 ```
+
+В PowerShell вместо `cp` используйте `Copy-Item .env.example .env`.
+Первый запуск автоматически применяет миграции и создаёт демо-данные;
+повторный запуск их не удаляет. По умолчанию интерфейс работает на моках и
+не требует MAX-токена.
 
 Откройте Mini App на <http://127.0.0.1:5173>, API healthcheck на
 <http://127.0.0.1:8000/api/healthz>, OpenAPI на

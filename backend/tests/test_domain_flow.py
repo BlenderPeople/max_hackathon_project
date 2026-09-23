@@ -23,6 +23,8 @@ from app.core.config import settings  # noqa: E402
 from app.domain.models import NotificationOutbox, utcnow  # noqa: E402
 from app.main import app  # noqa: E402
 from app.notification_worker import dispatch_once  # noqa: E402
+from app import seed as seed_module  # noqa: E402
+from app.domain.models import Business, Service, User  # noqa: E402
 
 
 def signed_init_data(user_id: int, *, hours_old: int = 0) -> str:
@@ -200,4 +202,23 @@ def test_signed_login_order_permissions_and_booking_flow() -> None:
         settings.max_upload_bytes = previous_limit
         storage.cleanup()
         app.dependency_overrides.clear()
+        engine.dispose()
+
+
+def test_demo_seed_can_run_twice_without_replacing_edits(monkeypatch) -> None:
+    engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
+    Base.metadata.create_all(engine)
+    sessions = sessionmaker(engine, expire_on_commit=False)
+    monkeypatch.setattr(seed_module, "SessionLocal", sessions)
+    try:
+        seed_module.seed()
+        with sessions.begin() as db:
+            business = db.scalar(select(Business))
+            business.name = "Название после редактирования"
+        seed_module.seed()
+        with sessions() as db:
+            assert db.scalar(select(Business)).name == "Название после редактирования"
+            assert len(db.scalars(select(User)).all()) == 2
+            assert len(db.scalars(select(Service)).all()) == 1
+    finally:
         engine.dispose()
