@@ -194,7 +194,7 @@ MAX client
 ### Заказы
 
 - `GET /api/orders?filter=attention|active|overdue|completed`;
-- `POST /api/orders`;
+- `POST /api/orders` — создание заказа клиентом по публичному токену услуги;
 - `GET /api/orders/{public_token}`;
 - `PATCH /api/orders/{public_token}`;
 - `POST /api/orders/{public_token}/stages/{stage_token}/activate`;

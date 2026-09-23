@@ -13,7 +13,7 @@
 | GET | `/api/businesses/{public_token}` | Публичный профиль мастера |
 | GET | `/api/businesses/{public_token}/services` | Активные услуги мастера |
 | GET | `/api/services/{public_token}` | Карточка услуги для диплинка |
-| POST | `/api/orders` | Создание заказа клиентом или мастером |
+| POST | `/api/orders` | Создание заказа клиентом по услуге |
 | GET | `/api/orders/{public_token}` | Единая ролевая карточка заказа |
 | PATCH | `/api/orders/{public_token}` | Разрешённое редактирование заказа |
 | POST | `/api/orders/{public_token}/stages/{stage_token}/activate` | Смена этапа |
