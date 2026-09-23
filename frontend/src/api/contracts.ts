@@ -45,4 +45,146 @@ export type Service = {
   price_from: string | null;
   image_url: string | null;
   business_name: string;
+  duration: string;
+  duration_minutes: number;
+};
+
+/**
+ * UI adapter models. They deliberately live next to the transport contract:
+ * Vasily can map the final OpenAPI responses here without changing screens.
+ */
+export type OrderFilter = 'all' | 'attention' | 'active' | 'overdue' | 'completed';
+
+export type OrderSummary = Pick<
+  Order,
+  'public_token' | 'title' | 'description' | 'status' | 'price' | 'due_at' | 'available_actions'
+> & {
+  business_name: string;
+  customer_name: string;
+  amount_paid: string;
+  requires_attention: boolean;
+  is_overdue: boolean;
+};
+
+export type OrderFile = {
+  id: string;
+  filename: string;
+  content_type: string;
+  size: number;
+  created_at: string;
+};
+
+export type Approval = {
+  id: string;
+  title: string;
+  description: string;
+  amount: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+};
+
+export type OrderDetails = Order & {
+  business_name: string;
+  customer_name: string;
+  created_at: string;
+  amount_paid: string;
+  files: OrderFile[];
+  pending_approval: Approval | null;
+  scheduled_start_at: string | null;
+  scheduled_end_at: string | null;
+};
+
+export type BusinessProfile = {
+  name: string;
+  description: string;
+  specialization: string;
+  experience: string;
+  work_features: string;
+  owner_name: string;
+  avatar_url: string | null;
+  rating: number;
+  completed_orders: number;
+  response_time: string;
+  services: Service[];
+  schedule: AvailabilitySchedule;
+};
+
+export type ServiceDetails = Service & {
+  business: Omit<BusinessProfile, 'services' | 'schedule'>;
+};
+
+export type CreateOrderInput = {
+  service_public_token: string;
+  description: string;
+  due_at: string | null;
+  scheduled_start_at: string;
+  scheduled_end_at: string;
+};
+
+export type RecordPaymentInput = {
+  order_public_token: string;
+  amount: string;
+  comment: string;
+};
+
+export type UpdateOrderInput = {
+  description: string;
+  due_at: string | null;
+};
+
+export type UpdateBusinessProfileInput = {
+  specialization: string;
+  experience: string;
+  work_features: string;
+  description: string;
+  avatar_data_url: string | null;
+};
+
+export type CreateServiceInput = {
+  title: string;
+  description: string;
+  price_from: string;
+  duration_minutes: number;
+  image_data_url: string | null;
+};
+
+export type Weekday = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+
+export type TimeInterval = {
+  id: string;
+  start: string;
+  end: string;
+};
+
+export type WeeklyAvailability = {
+  weekday: Weekday;
+  enabled: boolean;
+  intervals: TimeInterval[];
+};
+
+export type ScheduleOverride = {
+  date: string;
+  mode: 'closed' | 'custom';
+  intervals: TimeInterval[];
+};
+
+export type AvailabilitySchedule = {
+  timezone: string;
+  slot_duration_minutes: number;
+  weekly: WeeklyAvailability[];
+  overrides: ScheduleOverride[];
+};
+
+export type AvailableSlot = {
+  start_at: string;
+  end_at: string;
+};
+
+export type ScheduleView = AvailabilitySchedule & {
+  bookings: Array<{
+    order_public_token: string;
+    service_title: string;
+    customer_name: string;
+    start_at: string;
+    end_at: string;
+  }>;
 };
