@@ -75,6 +75,11 @@ export function useDecideApproval(publicToken: string) {
   });
 }
 
+export function useRequestApproval(publicToken: string) {
+  const invalidate = useOrderAction(publicToken);
+  return useMutation({ mutationFn: () => api.requestApproval(publicToken), onSuccess: invalidate });
+}
+
 export function useRecordPayment(publicToken: string) {
   const invalidate = useOrderAction(publicToken);
   return useMutation({
@@ -97,4 +102,9 @@ export function useCompleteOrder(publicToken: string) {
 export function useUpdateOrder(publicToken: string) {
   const invalidate = useOrderAction(publicToken);
   return useMutation({ mutationFn: (input: UpdateOrderInput) => api.updateOrder(publicToken, input), onSuccess: invalidate });
+}
+
+export function useUploadFile(publicToken: string) {
+  const invalidate = useOrderAction(publicToken);
+  return useMutation({ mutationFn: (file: File) => api.uploadFile(publicToken, file), onSuccess: invalidate });
 }

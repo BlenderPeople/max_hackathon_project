@@ -8,8 +8,10 @@ The UI uses only `api/client.ts` through TanStack Query hooks from
 - Default: in-memory contract mocks from `mockData.ts`.
 - `VITE_API_MODE=real`: requests go through the shared `api/http.ts` boundary.
 
-The real mode is intentionally not enabled by default because the current
-FastAPI application exposes no service or order routes yet.
+The real mode now uses MAX `initData` to create a short backend session and
+passes it as a bearer token. File upload and download use this session too;
+the app downloads via an authenticated blob request, not a bare URL. Keep
+mocks as the default until the team verifies the full flow inside MAX.
 
 ## Responses required from the backend
 

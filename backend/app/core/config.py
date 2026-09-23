@@ -13,6 +13,12 @@ class Settings(BaseSettings):
     max_app_url: str = ""
     max_api_base_url: str = "https://platform-api2.max.ru"
     max_ca_bundle_path: str = "/etc/ssl/certs/ca-certificates.crt"
+    max_init_data_max_age_seconds: int = 3600
+    session_ttl_seconds: int = 3600
+    demo_master_max_id: str = "900000001"
+    demo_customer_max_id: str = "900000002"
+    file_storage_dir: str = "/app/data/uploads"
+    max_upload_bytes: int = 10_485_760
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

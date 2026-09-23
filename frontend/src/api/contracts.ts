@@ -7,6 +7,7 @@ export type OrderStatus = 'new' | 'approval' | 'in_progress' | 'done';
 
 export type OrderAction =
   | 'update'
+  | 'request_approval'
   | 'activate_stage'
   | 'decide_approval'
   | 'record_payment'
@@ -129,6 +130,7 @@ export type RecordPaymentInput = {
 export type UpdateOrderInput = {
   description: string;
   due_at: string | null;
+  price?: string;
 };
 
 export type UpdateBusinessProfileInput = {

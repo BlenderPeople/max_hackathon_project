@@ -34,8 +34,13 @@ class MaxBotClient:
             response.raise_for_status()
             return response.json()
 
-    async def send_text(self, user_id: int, text: str) -> Mapping[str, object]:
-        """Send a plain message; notification templates are added later."""
+    async def send_text(self, user_id: int, text: str, *, link_url: str | None = None) -> Mapping[str, object]:
+        """Send a message with an optional MAX link button."""
+        body: dict[str, object] = {"text": text}
+        if link_url:
+            body["attachments"] = [{"type": "inline_keyboard", "payload": {"buttons": [[
+                {"type": "link", "text": "Открыть заказ", "url": link_url}
+            ]]}}]
         async with httpx.AsyncClient(
             base_url=self._base_url,
             headers=self._headers,
@@ -45,7 +50,7 @@ class MaxBotClient:
             response = await client.post(
                 "/messages",
                 params={"user_id": user_id},
-                json={"text": text},
+                json=body,
             )
             response.raise_for_status()
             return response.json()

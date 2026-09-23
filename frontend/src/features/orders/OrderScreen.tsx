@@ -9,7 +9,9 @@ import {
   useDecideApproval,
   useOrder,
   useRecordPayment,
+  useRequestApproval,
   useUpdateOrder,
+  useUploadFile,
 } from '../../api/hooks';
 import { ApprovalDialog } from '../../components/ApprovalDialog';
 import { EditOrderDialog } from '../../components/EditOrderDialog';
@@ -25,10 +27,12 @@ export function OrderScreen() {
   const { publicToken = '' } = useParams();
   const query = useOrder(publicToken);
   const decideApproval = useDecideApproval(publicToken);
+  const requestApproval = useRequestApproval(publicToken);
   const payment = useRecordPayment(publicToken);
   const activateStage = useActivateStage(publicToken);
   const completeOrder = useCompleteOrder(publicToken);
   const updateOrder = useUpdateOrder(publicToken);
+  const uploadFile = useUploadFile(publicToken);
   const [approvalOpen, setApprovalOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -39,7 +43,7 @@ export function OrderScreen() {
   const order = query.data;
   const balance = order.price ? Math.max(0, Number(order.price) - Number(order.amount_paid)) : null;
   const currentStage = order.stages.find((stage) => !stage.completed_at);
-  const actionError = decideApproval.error || payment.error || activateStage.error || completeOrder.error || updateOrder.error;
+  const actionError = decideApproval.error || requestApproval.error || payment.error || activateStage.error || completeOrder.error || updateOrder.error;
   const scheduledLabel = order.scheduled_start_at ? new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }).format(new Date(order.scheduled_start_at)) : null;
 
   return (
@@ -78,6 +82,7 @@ export function OrderScreen() {
           <SectionHeader title="Доступные действия" />
           <div className="order-actions">
             {order.available_actions.includes('decide_approval') && <Button size="medium" variant="primary" iconBefore={<CheckCircle2 size={19} />} onClick={() => setApprovalOpen(true)}>Согласовать</Button>}
+            {order.available_actions.includes('request_approval') && <Button size="medium" variant="primary" iconBefore={<CheckCircle2 size={19} />} loading={requestApproval.isPending} onClick={() => requestApproval.mutate()}>Отправить на согласование</Button>}
             {order.available_actions.includes('record_payment') && <Button size="medium" variant="primary" iconBefore={<ReceiptRussianRuble size={19} />} onClick={() => setPaymentOpen(true)}>Добавить оплату</Button>}
             {order.available_actions.includes('activate_stage') && currentStage && <Button size="medium" variant="secondary" iconBefore={<Play size={19} />} loading={activateStage.isPending} onClick={() => activateStage.mutate(currentStage.id)}>Завершить этап</Button>}
             {order.available_actions.includes('update') && <Button size="medium" variant="secondary" iconBefore={<Pencil size={19} />} onClick={() => setEditOpen(true)}>Изменить</Button>}
@@ -88,7 +93,7 @@ export function OrderScreen() {
       )}
 
       <OrderStages stages={order.stages} />
-      <FileList files={order.files} />
+      <FileList files={order.files} uploading={uploadFile.isPending} uploadError={uploadFile.isError} onUpload={(file) => uploadFile.mutate(file)} />
       <OrderTimeline events={order.timeline} />
 
       <div className="order-discuss">
@@ -118,9 +123,10 @@ export function OrderScreen() {
         open={editOpen}
         description={order.description}
         dueAt={order.due_at}
+        price={order.price}
         loading={updateOrder.isPending}
         onClose={() => setEditOpen(false)}
-        onSubmit={(description, due_at) => updateOrder.mutate({ description, due_at }, { onSuccess: () => setEditOpen(false) })}
+        onSubmit={(description, due_at, price) => updateOrder.mutate({ description, due_at, ...(price ? { price } : {}) }, { onSuccess: () => setEditOpen(false) })}
       />
     </div>
   );
