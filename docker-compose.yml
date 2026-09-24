@@ -9,8 +9,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -25,18 +23,37 @@ services:
     env_file: .env
     environment:
       DATABASE_URL: ${DATABASE_URL}
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-1}
     ports:
       - "127.0.0.1:8000:8000"
+    volumes:
+      - ./backend:/app
+      - order_uploads:/app/data/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh scripts/start.sh
+
+  notifications:
+    profiles: ["notifications"]
+    build:
+      context: ./backend
+    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
     volumes:
       - ./backend:/app
     depends_on:
       db:
         condition: service_healthy
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: python -m app.notification_worker
 
   web:
     build:
       context: ./frontend
+    environment:
+      VITE_API_MODE: ${VITE_API_MODE:-mock}
+      VITE_MAX_BOT_USERNAME: ${VITE_MAX_BOT_USERNAME:-t216_hakaton_bot}
     ports:
       - "127.0.0.1:5173:5173"
     volumes:
@@ -49,3 +66,4 @@ services:
 volumes:
   postgres_data:
   frontend_node_modules:
+  order_uploads:

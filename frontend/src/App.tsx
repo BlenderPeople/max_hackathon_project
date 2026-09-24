@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { getLaunchContext } from './bridge/maxBridge';
+import { authenticateMax } from './api/http';
 import { AppShell } from './components/AppShell';
 import { PageState } from './components/PageState';
 import { CreateOrderScreen } from './features/orders/CreateOrderScreen';
@@ -25,15 +26,23 @@ function RootRoute() {
 export default function App() {
   const launch = getLaunchContext();
   const [booting, setBooting] = useState(true);
+  const [authError, setAuthError] = useState(false);
   useEffect(() => {
-    const timer = window.setTimeout(() => setBooting(false), 320);
-    return () => window.clearTimeout(timer);
-  }, []);
+    if (import.meta.env.VITE_API_MODE !== 'real' || !launch.initData) {
+      const timer = window.setTimeout(() => setBooting(false), 320);
+      return () => window.clearTimeout(timer);
+    }
+    let active = true;
+    authenticateMax(launch.initData)
+      .catch(() => { if (active) setAuthError(true); })
+      .finally(() => { if (active) setBooting(false); });
+    return () => { active = false; };
+  }, [launch.initData]);
 
   const launchState = new URLSearchParams(window.location.search).get('launch');
-  const launchFailed = launchState === 'error';
+  const launchFailed = launchState === 'error' || authError;
   const unauthorized = launchState === 'unauthorized'
-    || (import.meta.env.VITE_API_MODE === 'real' && launch.isMax && !launch.initData);
+    || (import.meta.env.VITE_API_MODE === 'real' && !launch.initData);
 
   return (
     <AppShell>

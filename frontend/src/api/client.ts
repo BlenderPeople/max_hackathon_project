@@ -12,8 +12,9 @@ import type {
   AvailableSlot,
   UpdateBusinessProfileInput,
   UpdateOrderInput,
+  CurrentUser,
 } from './contracts';
-import { request } from './http';
+import { request, requestBlob } from './http';
 import {
   mockActivateStage,
   mockCompleteOrder,
@@ -31,12 +32,17 @@ import {
   mockUpdateBusiness,
   mockUpdateSchedule,
   mockRecordPayment,
+  mockRequestApproval,
   mockUpdateOrder,
+  mockUploadFile,
 } from './mockData';
 
 const isRealApi = import.meta.env.VITE_API_MODE === 'real';
 
 export const api = {
+  getMe(): Promise<CurrentUser> {
+    return isRealApi ? request('/me') : Promise.resolve({ id: 'demo_customer', first_name: 'Демо', last_name: 'Клиент', max_user_id: '900000002' });
+  },
   getService(publicToken: string): Promise<ServiceDetails> {
     return isRealApi ? request(`/services/${encodeURIComponent(publicToken)}`) : mockGetService(publicToken);
   },
@@ -81,6 +87,13 @@ export const api = {
         })
       : mockDecideApproval(publicToken, approved);
   },
+  requestApproval(publicToken: string): Promise<void> {
+    return isRealApi
+      ? request(`/orders/${encodeURIComponent(publicToken)}/approvals`, {
+          method: 'POST', body: JSON.stringify({ title: 'Согласование стоимости' }),
+        })
+      : mockRequestApproval(publicToken);
+  },
   recordPayment(input: RecordPaymentInput): Promise<void> {
     return isRealApi
       ? request(`/orders/${encodeURIComponent(input.order_public_token)}/payments`, {
@@ -104,9 +117,20 @@ export const api = {
       ? request(`/orders/${encodeURIComponent(publicToken)}`, { method: 'PATCH', body: JSON.stringify(input) })
       : mockUpdateOrder(publicToken, input);
   },
-  downloadFile(fileId: string): Promise<void> {
+  uploadFile(orderToken: string, file: File): Promise<void> {
+    if (!isRealApi) return mockUploadFile(orderToken, file);
+    const body = new FormData();
+    body.append('file', file);
+    return request(`/orders/${encodeURIComponent(orderToken)}/files`, { method: 'POST', body });
+  },
+  async downloadFile(fileId: string, filename: string): Promise<void> {
     if (!isRealApi) return mockDownloadFile(fileId);
-    window.location.assign(`/api/files/${encodeURIComponent(fileId)}/download`);
-    return Promise.resolve();
+    const blob = await requestBlob(`/files/${encodeURIComponent(fileId)}/download`);
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   },
 };
