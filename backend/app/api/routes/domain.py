@@ -60,7 +60,7 @@ def get_business(public_token: str, db: Session = Depends(get_db_session)) -> di
     business = db.scalar(select(Business).where(Business.public_token == public_token))
     if business is None:
         raise HTTPException(status_code=404, detail="business not found")
-    return business_view(db, business)
+    return business_view(db, business, include_bookings=False)
 
 
 @router.get("/businesses/{public_token}/services")

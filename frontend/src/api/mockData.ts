@@ -36,6 +36,7 @@ const schedule: AvailabilitySchedule = {
 };
 
 let business: BusinessProfile = {
+  public_token: 'biz_demo_master',
   name: 'Зелёный двор',
   description: 'Уход за деревьями и садом в Новосибирске и области.',
   specialization: 'Арбористика и уход за садом',
@@ -104,7 +105,8 @@ function overlaps(start: number, end: number, otherStart: number, otherEnd: numb
 
 function toSummary(order: OrderDetails): OrderSummary {
   const due = order.due_at ? new Date(order.due_at).getTime() : Infinity;
-  return { public_token: order.public_token, title: order.title, description: order.description, status: order.status, price: order.price, due_at: order.due_at, business_name: order.business_name, customer_name: order.customer_name, amount_paid: order.amount_paid, available_actions: order.available_actions, requires_attention: order.available_actions.includes('decide_approval'), is_overdue: order.status !== 'done' && due < Date.now() };
+  const isOverdue = order.status !== 'done' && due < Date.now();
+  return { public_token: order.public_token, title: order.title, description: order.description, status: order.status, price: order.price, due_at: order.due_at, business_name: order.business_name, customer_name: order.customer_name, amount_paid: order.amount_paid, available_actions: order.available_actions, requires_attention: isOverdue || order.available_actions.includes('decide_approval') || (order.status === 'new' && order.available_actions.includes('update')), is_overdue: isOverdue };
 }
 
 export async function mockGetService(publicToken: string): Promise<ServiceDetails> { await delay(); if (publicToken === 'error') throw new Error('Не удалось загрузить услугу'); const item = services.find((service) => service.public_token === publicToken); if (!item) throw new Error('Услуга не найдена'); return structuredClone(serviceView(item)); }
@@ -114,7 +116,7 @@ export async function mockGetOrder(publicToken: string): Promise<OrderDetails> {
 
 export async function mockGetSlots(serviceToken: string, date: string): Promise<AvailableSlot[]> {
   await delay(180); const item = services.find((service) => service.public_token === serviceToken); if (!item) throw new Error('Услуга не найдена'); const result: AvailableSlot[] = []; const duration = item.duration_minutes; const step = business.schedule.slot_duration_minutes;
-  for (const interval of scheduleIntervals(date)) for (let start = minutes(interval.start); start + duration <= minutes(interval.end); start += step) { const startAt = dateWithTime(date, timeString(start)); const endAt = new Date(startAt.getTime() + duration * 60_000); const occupied = orders.some((order) => order.scheduled_start_at && order.scheduled_end_at && overlaps(startAt.getTime(), endAt.getTime(), new Date(order.scheduled_start_at).getTime(), new Date(order.scheduled_end_at).getTime())); if (startAt.getTime() > Date.now() && !occupied) result.push({ start_at: startAt.toISOString(), end_at: endAt.toISOString() }); }
+  for (const interval of scheduleIntervals(date)) for (let start = minutes(interval.start); start + duration <= minutes(interval.end); start += step) { const startAt = dateWithTime(date, timeString(start)); const endAt = new Date(startAt.getTime() + duration * 60_000); const occupied = orders.some((order) => order.status !== 'done' && order.scheduled_start_at && order.scheduled_end_at && overlaps(startAt.getTime(), endAt.getTime(), new Date(order.scheduled_start_at).getTime(), new Date(order.scheduled_end_at).getTime())); if (startAt.getTime() > Date.now() && !occupied) result.push({ start_at: startAt.toISOString(), end_at: endAt.toISOString() }); }
   return result;
 }
 

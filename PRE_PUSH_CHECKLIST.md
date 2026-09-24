@@ -53,8 +53,10 @@ chore: bootstrap MAX Mini App platform
 
 ## После push
 
-- включить CI: frontend typecheck/build, backend compileall/tests и
-  `docker compose config`;
+- CI подготовлен как `.github/ci-template.yml`: Василию нужно перенести его
+  в `.github/workflows/ci.yml` с PAT, у которого есть право `workflow`,
+  затем проверить первый запуск (frontend typecheck/build, backend tests,
+  `docker compose config`);
 - настроить secrets только в CI/production environment, а не repository
   variables с публичным доступом;
 - после HTTPS-deploy зарегистрировать URL Mini App и webhook в MAX;

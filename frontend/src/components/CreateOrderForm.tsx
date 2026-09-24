@@ -8,23 +8,25 @@ import { formatMoney } from '../lib/format';
 
 type CreateOrderFormProps = {
   service: ServiceDetails;
+  isMaster: boolean;
   loading: boolean;
   onSubmit: (input: CreateOrderInput) => void;
 };
 
-export function CreateOrderForm({ service, loading, onSubmit }: CreateOrderFormProps) {
+export function CreateOrderForm({ service, isMaster, loading, onSubmit }: CreateOrderFormProps) {
   const [description, setDescription] = useState('');
+  const [customerToken, setCustomerToken] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedSlot, setSelectedSlot] = useState<{ start_at: string; end_at: string } | null>(null);
   const slots = useAvailableSlots(service.public_token, selectedDate);
-  const valid = description.trim().length >= 12 && Boolean(selectedSlot);
+  const valid = description.trim().length >= 12 && Boolean(selectedSlot) && (!isMaster || Boolean(customerToken.trim()));
   useEffect(() => { setSelectedSlot(slots.data?.[0] ?? null); }, [selectedDate, slots.data]);
   const today = new Date().toISOString().slice(0, 10);
   const formatSlot = (value: string) => new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit' }).format(new Date(value));
   return (
     <form className="create-order-form" onSubmit={(event) => {
       event.preventDefault();
-      if (valid && selectedSlot) onSubmit({ service_public_token: service.public_token, description: description.trim(), due_at: selectedSlot.end_at, scheduled_start_at: selectedSlot.start_at, scheduled_end_at: selectedSlot.end_at });
+      if (valid && selectedSlot) onSubmit({ service_public_token: service.public_token, ...(isMaster ? { customer_public_token: customerToken.trim() } : {}), description: description.trim(), due_at: selectedSlot.end_at, scheduled_start_at: selectedSlot.start_at, scheduled_end_at: selectedSlot.end_at });
     }}>
       <div className="form-progress" aria-label="Шаг 2 из 2"><span /><span className="is-active" /></div>
       <header className="form-intro">
@@ -37,6 +39,7 @@ export function CreateOrderForm({ service, loading, onSubmit }: CreateOrderFormP
         <div><strong>{service.title}</strong><span>от {formatMoney(service.price_from)}</span></div>
         <Check size={19} aria-hidden="true" />
       </div>
+      {isMaster && <label className="form-field"><span>Код клиента</span><input type="text" value={customerToken} onChange={(event) => setCustomerToken(event.target.value)} placeholder="Публичный код из профиля клиента" required /><small>Клиент должен хотя бы раз открыть приложение в MAX и передать вам свой код.</small></label>}
       <label className="form-field">
         <span>Что нужно сделать</span>
         <Textarea

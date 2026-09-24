@@ -5,6 +5,13 @@
  */
 export type OrderStatus = 'new' | 'approval' | 'in_progress' | 'done';
 
+export type CurrentUser = {
+  id: string;
+  first_name: string;
+  last_name: string | null;
+  max_user_id: string;
+};
+
 export type OrderAction =
   | 'update'
   | 'request_approval'
@@ -95,6 +102,7 @@ export type OrderDetails = Order & {
 };
 
 export type BusinessProfile = {
+  public_token: string;
   name: string;
   description: string;
   specialization: string;
@@ -115,6 +123,7 @@ export type ServiceDetails = Service & {
 
 export type CreateOrderInput = {
   service_public_token: string;
+  customer_public_token?: string;
   description: string;
   due_at: string | null;
   scheduled_start_at: string;

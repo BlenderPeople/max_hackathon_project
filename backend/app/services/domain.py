@@ -48,7 +48,8 @@ def service_view(service: Service) -> dict:
     }
 
 
-def business_view(db: Session, business: Business, *, include_services: bool = True) -> dict:
+def business_view(db: Session, business: Business, *, include_services: bool = True,
+                  include_bookings: bool = True) -> dict:
     completed = db.scalar(select(func.count(Order.id)).where(Order.business_id == business.id, Order.status == "done")) or 0
     result = {
         "public_token": business.public_token,
@@ -65,7 +66,10 @@ def business_view(db: Session, business: Business, *, include_services: bool = T
     }
     if include_services:
         result["services"] = [service_view(service) for service in business.services if service.is_active]
-        result["schedule"] = schedule_view(db, business)
+        schedule = schedule_view(db, business)
+        if not include_bookings:
+            schedule.pop("bookings")
+        result["schedule"] = schedule
     return result
 
 
@@ -134,7 +138,8 @@ def order_view(order: Order, user: User) -> dict:
                               "status": approval.status} if approval else None),
         "scheduled_start_at": utc(order.scheduled_start_at) if order.scheduled_start_at else None,
         "scheduled_end_at": utc(order.scheduled_end_at) if order.scheduled_end_at else None,
-        "requires_attention": "decide_approval" in actions or (order.business.owner_id == user.id and order.status == "new"),
+        "requires_attention": is_overdue(order) or "decide_approval" in actions
+        or (order.business.owner_id == user.id and order.status == "new"),
         "is_overdue": is_overdue(order),
     }
 
@@ -158,7 +163,7 @@ def add_event(order: Order, user: User, event_type: str, title: str, payload: di
     event = OrderEvent(actor_id=user.id, type=event_type, title=title, payload=payload or {}, created_at=utcnow())
     order.events.append(event)
     recipient = {
-        "order.created": order.business.owner,
+        "order.created": order.customer if order.business.owner_id == user.id else order.business.owner,
         "approval.requested": order.customer,
         "approval.decided": order.business.owner,
         "order.stage_completed": order.customer,
@@ -217,7 +222,11 @@ def slots_for(db: Session, service: Service, on_date: date) -> list[dict]:
     else:
         day = next((item for item in business.weekly if item["weekday"] == on_date.isoweekday()), None)
         intervals = day["intervals"] if day and day["enabled"] else []
-    bookings = db.scalars(select(Order).where(Order.business_id == business.id, Order.scheduled_start_at.is_not(None))).all()
+    bookings = db.scalars(select(Order).where(
+        Order.business_id == business.id,
+        Order.scheduled_start_at.is_not(None),
+        Order.status != "done",
+    )).all()
     result = []
     for interval in intervals:
         start = datetime.combine(on_date, time.fromisoformat(interval["start"]), zone)
@@ -235,7 +244,15 @@ def slots_for(db: Session, service: Service, on_date: date) -> list[dict]:
 
 def create_order(db: Session, user: User, service: Service, body: OrderCreate) -> Order:
     if service.business.owner_id == user.id:
-        raise HTTPException(status_code=403, detail="cannot order own service")
+        if not body.customer_public_token:
+            raise HTTPException(status_code=422, detail="customer_public_token is required for master-created orders")
+        customer = db.scalar(select(User).where(User.public_token == body.customer_public_token))
+        if customer is None or customer.id == user.id:
+            raise HTTPException(status_code=404, detail="customer not found")
+    else:
+        if body.customer_public_token is not None:
+            raise HTTPException(status_code=403, detail="only the master can choose a customer")
+        customer = user
     if not service.is_active:
         raise HTTPException(status_code=404, detail="service not found")
     if body.scheduled_start_at.tzinfo is None or body.scheduled_end_at.tzinfo is None:
@@ -248,7 +265,7 @@ def create_order(db: Session, user: User, service: Service, body: OrderCreate) -
                for slot in slots_for(db, service, local_date)):
         raise HTTPException(status_code=409, detail="slot is no longer available")
     now = utcnow()
-    order = Order(business=service.business, service=service, customer=user, title=service.title,
+    order = Order(business=service.business, service=service, customer=customer, title=service.title,
                   description=body.description, status="new", price=None, due_at=body.due_at,
                   scheduled_start_at=utc(body.scheduled_start_at), scheduled_end_at=utc(body.scheduled_end_at),
                   created_at=now, updated_at=now)

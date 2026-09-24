@@ -185,3 +185,11 @@ class NotificationOutbox(Base):
     event: Mapped[OrderEvent] = relationship(back_populates="notifications")
     order: Mapped[Order] = relationship()
     recipient: Mapped[User] = relationship()
+
+
+class WebhookReceipt(Base):
+    __tablename__ = "webhook_receipts"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    payload_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    update_type: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

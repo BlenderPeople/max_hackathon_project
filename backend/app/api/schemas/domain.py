@@ -89,6 +89,7 @@ class AvailableSlot(BaseModel):
 
 class OrderCreate(BaseModel):
     service_public_token: str
+    customer_public_token: str | None = None
     description: str = Field(min_length=1, max_length=500)
     due_at: datetime | None = None
     scheduled_start_at: datetime

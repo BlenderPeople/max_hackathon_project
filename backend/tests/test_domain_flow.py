@@ -24,7 +24,7 @@ from app.domain.models import NotificationOutbox, utcnow  # noqa: E402
 from app.main import app  # noqa: E402
 from app.notification_worker import dispatch_once  # noqa: E402
 from app import seed as seed_module  # noqa: E402
-from app.domain.models import Business, Service, User  # noqa: E402
+from app.domain.models import Business, Order, Service, User, WebhookReceipt  # noqa: E402
 
 
 def signed_init_data(user_id: int, *, hours_old: int = 0) -> str:
@@ -95,6 +95,16 @@ def test_signed_login_order_permissions_and_booking_flow() -> None:
             created = http.post("/api/orders", headers=customer, json=order_input)
             assert created.status_code == 201, created.text
             token = created.json()["public_token"]
+            public_business = http.get(f"/api/businesses/{business_token}").json()
+            assert "bookings" not in public_business["schedule"]
+            private_business = http.get("/api/businesses/me", headers=master).json()
+            assert private_business["schedule"]["bookings"][0]["customer_name"] == "User 202"
+            with sessions.begin() as db:
+                order = db.scalar(select(Order).where(Order.public_token == token))
+                order.due_at = utcnow() - timedelta(minutes=1)
+            attention = http.get("/api/orders?filter=attention", headers=customer).json()
+            assert [item["public_token"] for item in attention] == [token]
+            assert attention[0]["is_overdue"] is True
             assert http.post("/api/orders", headers=stranger, json=order_input).status_code == 409
             assert http.get(f"/api/orders/{token}", headers=stranger).status_code == 403
             upload = http.post(f"/api/orders/{token}/files", headers=customer,
@@ -146,13 +156,25 @@ def test_signed_login_order_permissions_and_booking_flow() -> None:
             completed = http.post(f"/api/orders/{token}/complete", headers=master)
             assert completed.status_code == 200, completed.text
             assert completed.json()["status"] == "done"
+            reopened_slots = http.get(f"/api/services/{service_token}/availability",
+                                      params={"date": day.isoformat()}).json()
+            assert any(item["start_at"] == slot["start_at"] for item in reopened_slots)
+            customer_token = http.get("/api/me", headers=customer).json()["id"]
+            master_input = {**order_input, "customer_public_token": customer_token}
+            assert http.post("/api/orders", headers=customer, json=master_input).status_code == 403
+            master_created = http.post("/api/orders", headers=master, json=master_input)
+            assert master_created.status_code == 201, master_created.text
+            assert http.get(f"/api/orders/{master_created.json()['public_token']}", headers=customer).status_code == 200
+            with sessions() as db:
+                latest_notification = db.scalars(select(NotificationOutbox).order_by(NotificationOutbox.id.desc())).first()
+                assert latest_notification.recipient.max_user_id == "202"
             assert http.get("/api/orders?filter=completed", headers=customer).json()[0]["public_token"] == token
             assert http.get("/api/orders?filter=active", headers=stranger).json() == []
             assert http.get(f"/api/orders/{token}/events", headers=customer).json()[0]["type"] == "order.completed"
 
             with sessions() as db:
                 notifications = db.scalars(select(NotificationOutbox).order_by(NotificationOutbox.id)).all()
-                assert len(notifications) == 8
+                assert len(notifications) == 9
                 assert notifications[0].recipient.max_user_id == "101"
                 assert notifications[1].recipient.max_user_id == "202"
                 assert all(item.status == "pending" for item in notifications)
@@ -227,4 +249,32 @@ def test_demo_seed_can_run_twice_without_replacing_edits(monkeypatch) -> None:
             assert len(db.scalars(select(User)).all()) == 2
             assert len(db.scalars(select(Service)).all()) == 1
     finally:
+        engine.dispose()
+
+
+def test_webhook_replay_is_recorded_once() -> None:
+    engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
+    Base.metadata.create_all(engine)
+    sessions = sessionmaker(engine, expire_on_commit=False)
+    previous_secret = settings.max_webhook_secret
+    settings.max_webhook_secret = "test-secret"
+
+    def db_override():
+        with sessions() as session:
+            yield session
+
+    app.dependency_overrides[get_db_session] = db_override
+    try:
+        with TestClient(app) as http:
+            update = {"update_type": "bot_started", "timestamp": 123, "chat_id": 42}
+            assert http.post("/webhooks/max", json=update).status_code == 401
+            headers = {"X-Max-Bot-Api-Secret": "test-secret"}
+            assert http.post("/webhooks/max", json=update, headers=headers).status_code == 200
+            assert http.post("/webhooks/max", json=update, headers=headers).status_code == 200
+            assert http.post("/webhooks/max", content=b"not-json", headers=headers).status_code == 400
+            with sessions() as db:
+                assert len(db.scalars(select(WebhookReceipt)).all()) == 1
+    finally:
+        settings.max_webhook_secret = previous_secret
+        app.dependency_overrides.clear()
         engine.dispose()

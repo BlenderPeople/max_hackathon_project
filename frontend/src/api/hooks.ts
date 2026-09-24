@@ -3,6 +3,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AvailabilitySchedule, CreateOrderInput, CreateServiceInput, OrderFilter, RecordPaymentInput, UpdateBusinessProfileInput, UpdateOrderInput } from './contracts';
 import { api } from './client';
 
+export function useMe() {
+  return useQuery({ queryKey: ['me'], queryFn: api.getMe });
+}
+
 export function useService(publicToken: string) {
   return useQuery({ queryKey: ['service', publicToken], queryFn: () => api.getService(publicToken) });
 }
