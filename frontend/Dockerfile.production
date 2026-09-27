@@ -1,0 +1,19 @@
+FROM node:22-alpine AS build
+
+WORKDIR /app
+
+ARG VITE_API_MODE=real
+ARG VITE_MAX_BOT_USERNAME
+ENV VITE_API_MODE=$VITE_API_MODE \
+    VITE_MAX_BOT_USERNAME=$VITE_MAX_BOT_USERNAME
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY . .
+RUN npm run build
+
+FROM caddy:2-alpine
+
+COPY Caddyfile /etc/caddy/Caddyfile
+COPY --from=build /app/dist /srv

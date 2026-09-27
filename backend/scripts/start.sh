@@ -1,4 +1,5 @@
 #!/bin/sh
+# This file must keep LF line endings: it is executed by /bin/sh in Linux.
 set -eu
 
 alembic upgrade head

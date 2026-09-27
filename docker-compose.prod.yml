@@ -20,29 +20,25 @@ services:
   api:
     build:
       context: ./backend
+    restart: unless-stopped
     env_file: .env
     environment:
       DATABASE_URL: ${DATABASE_URL}
-      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-1}
-    ports:
-      - "127.0.0.1:8000:8000"
+      SEED_DEMO_DATA: "0"
     volumes:
-      - ./backend:/app
       - order_uploads:/app/data/uploads
     depends_on:
       db:
         condition: service_healthy
-    command: sh scripts/start.sh
+    command: sh -c 'alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000'
 
   notifications:
-    profiles: ["notifications"]
     build:
       context: ./backend
+    restart: unless-stopped
     env_file: .env
     environment:
       DATABASE_URL: ${DATABASE_URL}
-    volumes:
-      - ./backend:/app
     depends_on:
       db:
         condition: service_healthy
@@ -51,22 +47,25 @@ services:
   web:
     build:
       context: ./frontend
+      dockerfile: Dockerfile.production
+      args:
+        VITE_API_MODE: real
+        VITE_MAX_BOT_USERNAME: ${VITE_MAX_BOT_USERNAME}
+    restart: unless-stopped
+    env_file: .env
     environment:
-      VITE_API_MODE: ${VITE_API_MODE:-mock}
-      VITE_MAX_BOT_USERNAME: ${VITE_MAX_BOT_USERNAME:-t216_hakaton_bot}
+      APP_DOMAIN: ${APP_DOMAIN}
     ports:
-      - "127.0.0.1:5173:5173"
-    volumes:
-      - ./frontend:/app
-      - frontend_node_modules:/app/node_modules
+      - "80:80"
+      - "443:443"
     depends_on:
       - api
-    # The named node_modules volume survives image rebuilds. npm ci makes its
-    # contents match the lockfile on every local start, including after a
-    # dependency change or an older development volume.
-    command: sh -c 'npm ci && exec npm run dev -- --host 0.0.0.0'
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
 
 volumes:
   postgres_data:
-  frontend_node_modules:
   order_uploads:
+  caddy_data:
+  caddy_config:
