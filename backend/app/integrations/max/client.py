@@ -54,3 +54,27 @@ class MaxBotClient:
             )
             response.raise_for_status()
             return response.json()
+
+    async def configure_webhook(
+        self,
+        *,
+        url: str,
+        secret: str,
+        update_types: list[str],
+    ) -> Mapping[str, object]:
+        """Create or update the bot's HTTPS webhook subscription."""
+        async with httpx.AsyncClient(
+            base_url=self._base_url,
+            headers=self._headers,
+            verify=self._ssl_context,
+            timeout=10.0,
+        ) as client:
+            response = await client.post(
+                "/subscriptions",
+                json={"url": url, "secret": secret, "update_types": update_types},
+            )
+            response.raise_for_status()
+            payload = response.json()
+            if not isinstance(payload, Mapping) or payload.get("success") is False:
+                raise RuntimeError("MAX rejected webhook subscription")
+            return payload

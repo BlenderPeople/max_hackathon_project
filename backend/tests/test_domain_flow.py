@@ -257,7 +257,11 @@ def test_webhook_replay_is_recorded_once() -> None:
     Base.metadata.create_all(engine)
     sessions = sessionmaker(engine, expire_on_commit=False)
     previous_secret = settings.max_webhook_secret
+    previous_token = settings.max_bot_token
+    previous_username = settings.max_bot_username
     settings.max_webhook_secret = "test-secret"
+    settings.max_bot_token = "test-bot-token"
+    settings.max_bot_username = "test_bot"
 
     def db_override():
         with sessions() as session:
@@ -265,16 +269,38 @@ def test_webhook_replay_is_recorded_once() -> None:
 
     app.dependency_overrides[get_db_session] = db_override
     try:
+        from app.api.routes import webhooks as webhook_module
+
+        sent: list[tuple[int, str, str | None]] = []
+
+        class FakeClient:
+            def __init__(self, *_args):
+                pass
+
+            async def send_text(self, user_id, text, *, link_url=None):
+                sent.append((user_id, text, link_url))
+
+        original_client = webhook_module.MaxBotClient
+        webhook_module.MaxBotClient = FakeClient
         with TestClient(app) as http:
-            update = {"update_type": "bot_started", "timestamp": 123, "chat_id": 42}
+            update = {
+                "update_type": "bot_started",
+                "timestamp": 123,
+                "chat_id": 42,
+                "user": {"id": 42},
+            }
             assert http.post("/webhooks/max", json=update).status_code == 401
             headers = {"X-Max-Bot-Api-Secret": "test-secret"}
             assert http.post("/webhooks/max", json=update, headers=headers).status_code == 200
             assert http.post("/webhooks/max", json=update, headers=headers).status_code == 200
             assert http.post("/webhooks/max", content=b"not-json", headers=headers).status_code == 400
+            assert sent == [(42, "Добро пожаловать! Откройте приложение, чтобы создать или вести заказ.", "https://max.ru/test_bot?startapp")]
             with sessions() as db:
                 assert len(db.scalars(select(WebhookReceipt)).all()) == 1
     finally:
         settings.max_webhook_secret = previous_secret
+        settings.max_bot_token = previous_token
+        settings.max_bot_username = previous_username
+        webhook_module.MaxBotClient = original_client
         app.dependency_overrides.clear()
         engine.dispose()
