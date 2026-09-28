@@ -17,12 +17,11 @@ router = APIRouter(prefix="/webhooks", tags=["max"])
 logger = logging.getLogger(__name__)
 
 
-def _started_user_id(payload: dict[str, object]) -> int | None:
-    """Return a safe recipient id from a MAX bot_started event, if present."""
-    user = payload.get("user")
+def _positive_user_id(user: object) -> int | None:
+    """Read the current MAX `user_id` field, with legacy `id` fallback."""
     if not isinstance(user, dict):
         return None
-    user_id = user.get("id")
+    user_id = user.get("user_id", user.get("id"))
     if isinstance(user_id, bool):
         return None
     try:
@@ -32,9 +31,26 @@ def _started_user_id(payload: dict[str, object]) -> int | None:
     return value if value > 0 else None
 
 
-async def _send_start_message(payload: dict[str, object]) -> None:
+def _started_user_id(payload: dict[str, object]) -> int | None:
+    """Return the user who started the bot."""
+    return _positive_user_id(payload.get("user"))
+
+
+def _message_start_user_id(payload: dict[str, object]) -> int | None:
+    """Return a direct-message sender only when they sent the /start command."""
+    message = payload.get("message")
+    if not isinstance(message, dict):
+        return None
+    body = message.get("body")
+    if not isinstance(body, dict) or not isinstance(body.get("text"), str):
+        return None
+    if body["text"].strip().lower() not in {"/start", "start"}:
+        return None
+    return _positive_user_id(message.get("sender"))
+
+
+async def _send_start_message(recipient_id: int | None) -> None:
     """Answer a bot start with a MAX deep link to the attached Mini App."""
-    recipient_id = _started_user_id(payload)
     if recipient_id is None or not settings.max_bot_token or not settings.max_bot_username:
         return
     bot_name = settings.max_bot_username.lstrip("@")
@@ -82,5 +98,7 @@ async def receive_max_webhook(
         db.rollback()
         return {"accepted": True}
     if payload["update_type"] == "bot_started":
-        await _send_start_message(payload)
+        await _send_start_message(_started_user_id(payload))
+    elif payload["update_type"] == "message_created":
+        await _send_start_message(_message_start_user_id(payload))
     return {"accepted": True}

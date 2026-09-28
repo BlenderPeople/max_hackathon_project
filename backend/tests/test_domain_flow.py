@@ -287,7 +287,7 @@ def test_webhook_replay_is_recorded_once() -> None:
                 "update_type": "bot_started",
                 "timestamp": 123,
                 "chat_id": 42,
-                "user": {"id": 42},
+                "user": {"user_id": 42},
             }
             assert http.post("/webhooks/max", json=update).status_code == 401
             headers = {"X-Max-Bot-Api-Secret": "test-secret"}
@@ -295,8 +295,15 @@ def test_webhook_replay_is_recorded_once() -> None:
             assert http.post("/webhooks/max", json=update, headers=headers).status_code == 200
             assert http.post("/webhooks/max", content=b"not-json", headers=headers).status_code == 400
             assert sent == [(42, "Добро пожаловать! Откройте приложение, чтобы создать или вести заказ.", "https://max.ru/test_bot?startapp")]
+            start_message = {
+                "update_type": "message_created",
+                "timestamp": 124,
+                "message": {"sender": {"user_id": 43}, "body": {"text": "/start"}},
+            }
+            assert http.post("/webhooks/max", json=start_message, headers=headers).status_code == 200
+            assert sent[-1] == (43, "Добро пожаловать! Откройте приложение, чтобы создать или вести заказ.", "https://max.ru/test_bot?startapp")
             with sessions() as db:
-                assert len(db.scalars(select(WebhookReceipt)).all()) == 1
+                assert len(db.scalars(select(WebhookReceipt)).all()) == 2
     finally:
         settings.max_webhook_secret = previous_secret
         settings.max_bot_token = previous_token
