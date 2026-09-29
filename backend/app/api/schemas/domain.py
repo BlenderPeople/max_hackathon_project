@@ -159,6 +159,7 @@ class OrderView(BaseModel):
     available_actions: list[str]
     timeline: list[OrderEventView]
     business_name: str
+    business_public_token: str
     customer_name: str
     created_at: datetime
     amount_paid: str

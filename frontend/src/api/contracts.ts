@@ -73,6 +73,8 @@ export type OrderSummary = Pick<
   amount_paid: string;
   requires_attention: boolean;
   is_overdue: boolean;
+  scheduled_start_at?: string | null;
+  scheduled_end_at?: string | null;
 };
 
 export type OrderFile = {
@@ -93,6 +95,7 @@ export type Approval = {
 
 export type OrderDetails = Order & {
   business_name: string;
+  business_public_token: string;
   customer_name: string;
   created_at: string;
   amount_paid: string;
