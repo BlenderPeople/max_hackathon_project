@@ -50,7 +50,6 @@ export function ServiceScreen() {
       </Link>
       <section className="facts-row">
         <div><strong>{service.business.completed_orders}</strong><span>заказов</span></div>
-        <div><strong>{service.business.response_time.replace('Отвечает за ', '')}</strong><span>время ответа</span></div>
       </section>
       <div className="sticky-actions">
         <Button className="icon-btn" size="medium" variant="secondary" aria-label="Поделиться услугой" onClick={() => void shareService()}><Share2 size={21} /></Button>

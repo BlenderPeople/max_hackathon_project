@@ -36,7 +36,6 @@ export function MasterProfileScreen() {
       <div className="profile-metrics">
         <div><strong>{business.rating.toFixed(1)}</strong><span><Star size={11} /> рейтинг</span></div>
         <div><strong>{business.completed_orders}</strong><span>заказов</span></div>
-        <div><strong>{business.response_time.replace('Отвечает за ', '')}</strong><span><Clock3 size={11} /> ответ</span></div>
       </div>
       
       <section className="profile-about">

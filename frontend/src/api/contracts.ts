@@ -120,6 +120,7 @@ export type Approval = {
 
 export type OrderDetails = Order & {
   business_name: string;
+  business_public_token: string;
   business_owner_username: string | null;
   customer_name: string;
   created_at: string;

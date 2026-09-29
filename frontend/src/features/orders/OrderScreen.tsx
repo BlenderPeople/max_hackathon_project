@@ -57,7 +57,12 @@ export function OrderScreen() {
       <header className="order-hero">
         <StatusBadge status={order.status} />
         <h1>{order.title}</h1>
-        <p>{order.business_name} · заказчик {order.customer_name}</p>
+        <p>
+          <Link to={`/master/${order.business_public_token}`} className="master-profile-link" style={{ color: 'inherit', textDecoration: 'underline', textDecorationStyle: 'dotted' }}>
+            {order.business_name}
+          </Link>
+          {' · заказчик '}{order.customer_name}
+        </p>
       </header>
 
       {order.pending_approval?.status === 'pending' && order.available_actions.includes('decide_approval') && (

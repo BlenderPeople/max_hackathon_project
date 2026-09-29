@@ -5,11 +5,12 @@ import { Link } from 'react-router-dom';
 import { useOrders } from '../../api/hooks';
 import { OrderCard } from '../../components/OrderCard';
 import { PageState } from '../../components/PageState';
+import { toLocalDateString } from '../../lib/format';
 
 export function CalendarScreen() {
   const [roleMode, setRoleMode] = useState<'customer' | 'master'>('customer');
   const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
+    toLocalDateString(new Date())
   );
   const scrollRef = useRef<HTMLDivElement>(null);
   const query = useOrders('all');
@@ -32,7 +33,7 @@ export function CalendarScreen() {
 
   const displayedOrders = query.data?.filter(order => order.role === roleMode && order.scheduled_start_at) ?? [];
   const ordersByDate = displayedOrders.reduce((acc, order) => {
-    const dateStr = order.scheduled_start_at!.split('T')[0];
+    const dateStr = toLocalDateString(new Date(order.scheduled_start_at!));
     if (!acc[dateStr]) acc[dateStr] = [];
     acc[dateStr].push(order);
     return acc;
@@ -40,6 +41,7 @@ export function CalendarScreen() {
 
   // Scrollable drum of 61 days (30 days back, 30 days forward)
   const today = new Date();
+  today.setHours(12, 0, 0, 0);
   const days = Array.from({ length: 61 }, (_, i) => {
     const d = new Date(today);
     d.setDate(today.getDate() + i - 30);
@@ -70,7 +72,7 @@ export function CalendarScreen() {
         
         <div ref={scrollRef} style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '16px', scrollbarWidth: 'none', WebkitMaskImage: 'linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent)', maskImage: 'linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent)' }}>
           {days.map(d => {
-            const iso = d.toISOString().split('T')[0];
+            const iso = toLocalDateString(d);
             const hasOrders = !!ordersByDate[iso];
             const isSelected = iso === selectedDate;
             

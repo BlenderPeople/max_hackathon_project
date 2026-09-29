@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import type { CreateOrderInput, ServiceDetails } from '../api/contracts';
 import { useAvailableSlots } from '../api/hooks';
-import { formatMoney } from '../lib/format';
+import { formatMoney, toLocalDateString } from '../lib/format';
 
 type CreateOrderFormProps = {
   service: ServiceDetails;
@@ -21,7 +21,7 @@ export function CreateOrderForm({ service, isMaster, loading, onSubmit }: Create
   const slots = useAvailableSlots(service.public_token, selectedDate);
   const valid = Boolean(selectedSlot) && (!isMaster || Boolean(customerToken.trim()));
   useEffect(() => { setSelectedSlot(slots.data?.[0] ?? null); }, [selectedDate, slots.data]);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = toLocalDateString(new Date());
   const formatSlot = (value: string) => new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(value));
   return (
     <form className="create-order-form" onSubmit={(event) => {
@@ -35,7 +35,7 @@ export function CreateOrderForm({ service, isMaster, loading, onSubmit }: Create
         <p>Мастеру хватит пары деталей, чтобы оценить объём работы.</p>
       </header>
       <div className="selected-service">
-        <img src={service.image_url ?? '/assets/tree-pruning.jpg'} alt="" />
+        {service.image_url && <img src={service.image_url} alt="" />}
         <div><strong>{service.title}</strong><span>от {formatMoney(service.price_from)}</span></div>
         <Check size={19} aria-hidden="true" />
       </div>

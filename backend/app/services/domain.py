@@ -132,6 +132,7 @@ def order_view(order: Order, user: User) -> dict:
         "timeline": [{"id": event.public_token, "type": event.type, "title": event.title,
                       "created_at": utc(event.created_at)} for event in reversed(order.events)],
         "business_name": order.business.name,
+        "business_public_token": order.business.public_token,
         "business_owner_username": order.business.owner.username,
         "customer_name": person_name(order.customer),
         "created_at": utc(order.created_at),
