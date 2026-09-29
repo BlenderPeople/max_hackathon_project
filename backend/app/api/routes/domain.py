@@ -46,6 +46,7 @@ def my_business(db: Session = Depends(get_db_session), user: User = Depends(curr
 @router.patch("/businesses/me")
 def update_business(body: BusinessInput, db: Session = Depends(get_db_session), user: User = Depends(current_user)) -> dict:
     business = business_for(db, user)
+    business.name = body.name
     business.specialization = body.specialization
     business.experience = body.experience
     business.work_features = body.work_features

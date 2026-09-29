@@ -144,6 +144,7 @@ export type UpdateOrderInput = {
 };
 
 export type UpdateBusinessProfileInput = {
+  name: string;
   specialization: string;
   experience: string;
   work_features: string;

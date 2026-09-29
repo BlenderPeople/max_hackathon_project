@@ -28,7 +28,6 @@ export function MasterProfileScreen() {
           {business.avatar_url ? <Avatar.Image src={business.avatar_url} alt="" /> : <Avatar.Text gradient={gradient} style={{ fontSize: '32px' }}>{sticker}</Avatar.Text>}
         </Avatar.Container>
         <div>
-          <p className="overline">{business.specialization}</p>
           <h1>{business.owner_name}<BadgeCheck size={20} /></h1>
           <span>{business.name}</span>
         </div>

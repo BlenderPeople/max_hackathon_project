@@ -20,7 +20,7 @@ export function PublicProfileScreen() {
   const sticker = stickers[seed % stickers.length];
   const gradient = gradients[seed % gradients.length];
 
-  return <div className="screen public-profile"><header className="public-profile-header"><Avatar.Container size={82}>{business.avatar_url ? <Avatar.Image src={business.avatar_url} alt="" /> : <Avatar.Text gradient={gradient} style={{ fontSize: '32px' }}>{sticker}</Avatar.Text>}</Avatar.Container><div><p className="overline">{business.specialization}</p><h1>{business.owner_name}<BadgeCheck size={20} /></h1><span>{business.name}</span></div></header>
+  return <div className="screen public-profile"><header className="public-profile-header"><Avatar.Container size={82}>{business.avatar_url ? <Avatar.Image src={business.avatar_url} alt="" /> : <Avatar.Text gradient={gradient} style={{ fontSize: '32px' }}>{sticker}</Avatar.Text>}</Avatar.Container><div><h1>{business.owner_name}<BadgeCheck size={20} /></h1><span>{business.name}</span></div></header>
     <div className="profile-metrics"><div><strong>{business.rating.toFixed(1)}</strong><span><Star size={11} /> рейтинг</span></div><div><strong>{business.completed_orders}</strong><span>заказов</span></div><div><strong>{business.response_time.replace('Отвечает за ', '')}</strong><span><Clock3 size={11} /> ответ</span></div></div>
     <section className="profile-about"><h2>О мастере</h2><p>{business.description}</p><dl><div><dt>Опыт</dt><dd>{business.experience}</dd></div><div><dt>Особенности работы</dt><dd>{business.work_features}</dd></div></dl></section>
     <section><div className="section-heading"><div><h2>Услуга</h2><p>Выберите удобное время для записи.</p></div></div><ServiceCard service={query.data} /></section>
