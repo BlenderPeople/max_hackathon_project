@@ -10,7 +10,7 @@ export function SearchMasters() {
   const search = useSearchBusinesses(query);
 
   const stickers = ['🐶', '🐱', '🐼', '🦊', '🐻', '🐨', '🐸', '🐢', '🦖', '🐙'];
-  const gradients = ['green', 'blue', 'orange', 'purple', 'red'] as const;
+  const gradients = ['linear-gradient(135deg, #a8e063, #56ab2f)', 'linear-gradient(135deg, #4facfe, #00f2fe)', 'linear-gradient(135deg, #f6d365, #fda085)', 'linear-gradient(135deg, #c471f5, #fa71cd)', 'linear-gradient(135deg, #ff0844, #ffb199)'];
 
   return (
     <div className="search-masters">
@@ -38,7 +38,7 @@ export function SearchMasters() {
               return (
               <Link key={master.public_token} to={`/master/${master.public_token}`} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: 'var(--surface)', borderRadius: '12px', textDecoration: 'none', color: 'var(--text)', border: '1px solid var(--border)' }}>
                 <Avatar.Container size={48}>
-                  {master.avatar_url ? <Avatar.Image src={master.avatar_url} alt="" /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: `var(--max-color-${gradient})`, fontSize: '24px', lineHeight: 1 }}>{sticker}</div>}
+                  {master.avatar_url ? <Avatar.Image src={master.avatar_url} alt="" /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: gradient, fontSize: '24px', lineHeight: 1 }}>{sticker}</div>}
                 </Avatar.Container>
                 <div>
                   <strong style={{ display: 'block', fontSize: '15px' }}>{master.name}</strong>

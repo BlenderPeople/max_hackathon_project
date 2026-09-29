@@ -13,7 +13,7 @@ export function ProfileScreen() {
   if (query.isPending) return <PageState variant="loading" title="Открываем профиль" description="Загружаем данные мастера." />;
   if (query.isError) return <PageState variant="error" title="Профиль недоступен" description="Не удалось загрузить данные." />;
   const stickers = ['🐶', '🐱', '🐼', '🦊', '🐻', '🐨', '🐸', '🐢', '🦖', '🐙'];
-  const gradients = ['green', 'blue', 'orange', 'purple', 'red'] as const;
+  const gradients = ['linear-gradient(135deg, #a8e063, #56ab2f)', 'linear-gradient(135deg, #4facfe, #00f2fe)', 'linear-gradient(135deg, #f6d365, #fda085)', 'linear-gradient(135deg, #c471f5, #fa71cd)', 'linear-gradient(135deg, #ff0844, #ffb199)'];
   const seed = query.data.public_token ? query.data.public_token.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) : 0;
   const sticker = stickers[seed % stickers.length];
   const gradient = gradients[seed % gradients.length];
@@ -21,7 +21,7 @@ export function ProfileScreen() {
   return (
     <div className="screen profile-screen">
       <header className="profile-hero">
-        <Avatar.Container size={72}>{query.data.avatar_url ? <Avatar.Image src={query.data.avatar_url} alt="" /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: `var(--max-color-${gradient})`, fontSize: '36px', lineHeight: 1 }}>{sticker}</div>}</Avatar.Container>
+        <Avatar.Container size={72}>{query.data.avatar_url ? <Avatar.Image src={query.data.avatar_url} alt="" /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: gradient, fontSize: '36px', lineHeight: 1 }}>{sticker}</div>}</Avatar.Container>
         <div><h1>{query.data.owner_name}<BadgeCheck size={20} /></h1><span>{query.data.name}</span></div>
       </header>
       <div className="profile-metrics"><div><strong>{query.data.rating.toFixed(1)}</strong><span>рейтинг</span></div><div><strong>{query.data.completed_orders}</strong><span>заказов</span></div><div><strong>20 мин</strong><span>ответ</span></div></div>

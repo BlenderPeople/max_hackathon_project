@@ -15,7 +15,7 @@ export function OrderStages({ stages }: { stages: OrderStage[] }) {
           const active = index === activeIndex;
           return (
             <li key={stage.id} className={completed ? 'is-completed' : active ? 'is-current' : ''}>
-              <span className="stage-marker">{completed ? <Check size={15} /> : <Circle size={11} fill={active ? 'currentColor' : 'none'} />}</span>
+              <span className="stage-marker">{completed ? <Check size={16} strokeWidth={2.5} /> : null}</span>
               <div><strong>{stage.title}</strong><span>{completed ? 'Готово' : active ? 'Текущий этап' : 'Впереди'}</span></div>
             </li>
           );
