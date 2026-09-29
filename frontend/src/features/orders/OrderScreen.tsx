@@ -21,6 +21,7 @@ import { PageState } from '../../components/PageState';
 import { PaymentDialog } from '../../components/PaymentDialog';
 import { SectionHeader } from '../../components/SectionHeader';
 import { StatusBadge } from '../../components/StatusBadge';
+import { openMaxLink } from '../../bridge/maxBridge';
 import { formatDate, formatMoney } from '../../lib/format';
 
 export function OrderScreen() {
@@ -45,6 +46,8 @@ export function OrderScreen() {
   const currentStage = order.stages.find((stage) => !stage.completed_at);
   const actionError = decideApproval.error || requestApproval.error || payment.error || activateStage.error || completeOrder.error || updateOrder.error;
   const scheduledLabel = order.scheduled_start_at ? new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(order.scheduled_start_at)) : null;
+  const botName = String(import.meta.env.VITE_MAX_BOT_USERNAME || '').trim().replace(/^@/, '');
+  const discussUrl = botName ? `https://max.ru/${botName}?start=order_${order.public_token}` : null;
 
   return (
     <div className="order-page">
@@ -97,8 +100,8 @@ export function OrderScreen() {
       <OrderTimeline events={order.timeline} />
 
       <div className="order-discuss">
-        <Button asChild variant="secondary" size="medium" stretched iconBefore={<MessageCircle size={19} />}>
-          <a href="https://max.ru/t216_hakaton_bot" target="_blank" rel="noreferrer">Обсудить в MAX</a>
+        <Button variant="secondary" size="medium" stretched iconBefore={<MessageCircle size={19} />} disabled={!discussUrl} onClick={() => { if (discussUrl) openMaxLink(discussUrl); }}>
+          Обсудить в MAX
         </Button>
       </div>
 

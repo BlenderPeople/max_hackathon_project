@@ -111,6 +111,13 @@ def test_signed_login_order_permissions_and_booking_flow() -> None:
             assert "bookings" not in public_business["schedule"]
             private_business = http.get("/api/businesses/me", headers=master).json()
             assert private_business["schedule"]["bookings"][0]["customer_name"] == "User 202"
+            cleared_profile = http.patch("/api/businesses/me", headers=master, json={
+                "name": "", "specialization": "", "experience": "",
+                "work_features": "", "description": "", "avatar_data_url": None,
+            })
+            assert cleared_profile.status_code == 200, cleared_profile.text
+            assert cleared_profile.json()["name"] == "User 101"
+            assert cleared_profile.json()["description"] == ""
             with sessions.begin() as db:
                 order = db.scalar(select(Order).where(Order.public_token == token))
                 order.due_at = utcnow() - timedelta(minutes=1)

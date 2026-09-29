@@ -47,7 +47,7 @@ class ServiceDetails(ServiceView):
 
 
 class BusinessInput(BaseModel):
-    name: str = Field(min_length=1, max_length=120)
+    name: str = Field(max_length=120)
     specialization: str = Field(max_length=120)
     experience: str = Field(max_length=120)
     work_features: str = Field(max_length=300)
