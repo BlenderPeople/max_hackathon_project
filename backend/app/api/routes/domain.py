@@ -2,21 +2,22 @@ from datetime import date
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db_session
 from app.api.schemas.domain import (
-    ApprovalDecision, ApprovalRequest, AuthView, AvailableSlot, BusinessInput, MaxAuthInput,
+    ApprovalDecision, ApprovalRequest, AuthView, AvailableSlot, BusinessInput, ChatMessageInput,
+    ConversationCreate, ConversationView, MaxAuthInput,
     OrderCreate, OrderEventView, OrderUpdate, OrderView, PaymentInput, ScheduleInput,
     ScheduleView, ServiceDetails, ServiceInput, UserView,
 )
-from app.domain.models import Approval, Business, Order, OrderStage, Payment, Service, User, utcnow
+from app.domain.models import Approval, Business, ChatMessage, Conversation, Order, OrderStage, Payment, Service, User, utcnow
 from app.services.auth import create_session, current_user, validate_init_data
 from app.services.domain import (
     ZERO, actions_for, add_event, business_for, business_view, create_order, is_overdue,
-    latest_approval, money, order_view, paid_amount, require_owner, schedule_view,
-    service_details, service_view, slots_for, validate_schedule, visible_order,
+    conversation_view, latest_approval, money, order_view, paid_amount, require_owner, schedule_view,
+    service_details, service_view, slots_for, validate_schedule, visible_conversation, visible_order,
 )
 
 router = APIRouter(tags=["domain"])
@@ -30,7 +31,8 @@ def auth_max(body: MaxAuthInput, db: Session = Depends(get_db_session)) -> dict:
 
 def user_view(user: User) -> dict:
     return {"id": user.public_token, "first_name": user.first_name,
-            "last_name": user.last_name, "max_user_id": user.max_user_id}
+            "last_name": user.last_name, "max_user_id": user.max_user_id,
+            "username": user.username}
 
 
 @router.get("/me", response_model=UserView)
@@ -46,14 +48,37 @@ def my_business(db: Session = Depends(get_db_session), user: User = Depends(curr
 @router.patch("/businesses/me")
 def update_business(body: BusinessInput, db: Session = Depends(get_db_session), user: User = Depends(current_user)) -> dict:
     business = business_for(db, user)
-    business.name = body.name
-    business.specialization = body.specialization
-    business.experience = body.experience
-    business.work_features = body.work_features
-    business.description = body.description
+    # Empty optional fields are valid. Keep a readable profile title even when
+    # the user clears the name field completely.
+    business.name = body.name.strip() or " ".join(filter(None, (user.first_name, user.last_name))) or "Мастер"
+    business.specialization = body.specialization.strip()
+    business.experience = body.experience.strip()
+    business.work_features = body.work_features.strip()
+    business.description = body.description.strip()
     business.avatar_url = body.avatar_data_url
     db.commit()
     return business_view(db, business)
+
+
+@router.get("/businesses/search")
+def search_businesses(q: str = Query(..., min_length=1, max_length=120), db: Session = Depends(get_db_session)) -> list[dict]:
+    needle = q.strip().lstrip("@")
+    if not needle:
+        raise HTTPException(status_code=422, detail="search query must contain a name or username")
+    # Treat user input as text, not as a SQL LIKE pattern.
+    needle = needle.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    pattern = f"%{needle}%"
+    full_name = User.first_name + " " + func.coalesce(User.last_name, "")
+    query = select(Business).join(User, Business.owner_id == User.id).where(or_(
+        Business.handle.ilike(pattern, escape="\\"),
+        Business.name.ilike(pattern, escape="\\"),
+        User.username.ilike(pattern, escape="\\"),
+        User.first_name.ilike(pattern, escape="\\"),
+        User.last_name.ilike(pattern, escape="\\"),
+        full_name.ilike(pattern, escape="\\"),
+    )).order_by(Business.name).limit(50)
+    businesses = db.scalars(query).all()
+    return [business_view(db, b, include_services=True, include_bookings=False) for b in businesses]
 
 
 @router.get("/businesses/{public_token}")
@@ -70,17 +95,6 @@ def get_business_services(public_token: str, db: Session = Depends(get_db_sessio
     if business is None:
         raise HTTPException(status_code=404, detail="business not found")
     return [service_view(service) for service in business.services if service.is_active]
-
-
-@router.get("/businesses/search")
-def search_businesses(q: str = Query(..., min_length=1), db: Session = Depends(get_db_session)) -> list[dict]:
-    query = select(Business).join(User, Business.owner_id == User.id).where(
-        Business.name.ilike(f"%{q}%") |
-        User.username.ilike(f"%{q}%") |
-        User.first_name.ilike(f"%{q}%")
-    ).limit(50)
-    businesses = db.scalars(query).all()
-    return [business_view(db, b, include_services=True, include_bookings=False) for b in businesses]
 
 
 @router.get("/businesses/me/schedule", response_model=ScheduleView)
@@ -145,6 +159,51 @@ def update_service(public_token: str, body: ServiceInput, db: Session = Depends(
     return service_details(db, service)
 
 
+@router.get("/conversations", response_model=list[ConversationView])
+def list_conversations(db: Session = Depends(get_db_session), user: User = Depends(current_user)) -> list[dict]:
+    conversations = db.scalars(
+        select(Conversation).join(Business, Conversation.business_id == Business.id)
+        .where((Conversation.customer_id == user.id) | (Business.owner_id == user.id))
+        .order_by(Conversation.updated_at.desc())
+    ).all()
+    return [conversation_view(conversation, user) for conversation in conversations]
+
+
+@router.post("/conversations", response_model=ConversationView)
+def create_conversation(body: ConversationCreate, db: Session = Depends(get_db_session), user: User = Depends(current_user)) -> dict:
+    service = db.scalar(select(Service).where(Service.public_token == body.service_public_token, Service.is_active.is_(True)))
+    if service is None:
+        raise HTTPException(status_code=404, detail="service not found")
+    if service.business.owner_id == user.id:
+        raise HTTPException(status_code=409, detail="cannot start a conversation with yourself")
+    conversation = db.scalar(select(Conversation).where(
+        Conversation.service_id == service.id, Conversation.customer_id == user.id,
+    ))
+    if conversation is None:
+        conversation = Conversation(business=service.business, service=service, customer=user)
+        db.add(conversation)
+        db.commit()
+        db.refresh(conversation)
+    return conversation_view(conversation, user)
+
+
+@router.get("/conversations/{public_token}", response_model=ConversationView)
+def get_conversation(public_token: str, db: Session = Depends(get_db_session), user: User = Depends(current_user)) -> dict:
+    return conversation_view(visible_conversation(db, public_token, user), user)
+
+
+@router.post("/conversations/{public_token}/messages", response_model=ConversationView)
+def send_message(public_token: str, body: ChatMessageInput, db: Session = Depends(get_db_session), user: User = Depends(current_user)) -> dict:
+    conversation = visible_conversation(db, public_token, user)
+    text = body.text.strip()
+    if not text:
+        raise HTTPException(status_code=422, detail="message cannot be empty")
+    conversation.messages.append(ChatMessage(author=user, text=text))
+    conversation.updated_at = utcnow()
+    db.commit()
+    return conversation_view(conversation, user)
+
+
 @router.get("/orders", response_model=list[OrderView])
 def list_orders(
     filter: str = Query(default="all", pattern="^(all|attention|active|overdue|completed)$"),
@@ -170,6 +229,20 @@ def new_order(body: OrderCreate, db: Session = Depends(get_db_session), user: Us
     if service is None:
         raise HTTPException(status_code=404, detail="service not found")
     return order_view(create_order(db, user, service, body), user)
+
+
+@router.post("/orders/{public_token}/conversation", response_model=ConversationView)
+def order_conversation(public_token: str, db: Session = Depends(get_db_session), user: User = Depends(current_user)) -> dict:
+    order = visible_order(db, public_token, user)
+    conversation = db.scalar(select(Conversation).where(
+        Conversation.service_id == order.service_id, Conversation.customer_id == order.customer_id,
+    ))
+    if conversation is None:
+        conversation = Conversation(business=order.business, service=order.service, customer=order.customer)
+        db.add(conversation)
+        db.commit()
+        db.refresh(conversation)
+    return conversation_view(conversation, user)
 
 
 @router.get("/orders/{public_token}", response_model=OrderView)

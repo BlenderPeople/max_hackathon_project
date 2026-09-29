@@ -1,5 +1,5 @@
 import { IconButton, MaxUI } from '@maxhub/max-ui';
-import { ArrowLeft, BriefcaseBusiness, CalendarDays, Moon, PackageSearch, Sun, UserRound } from 'lucide-react';
+import { ArrowLeft, BriefcaseBusiness, CalendarDays, MessageCircle, Moon, PackageSearch, Sun, UserRound } from 'lucide-react';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 
@@ -13,6 +13,7 @@ export function useTheme() {
 }
 
 const navItems = [
+  { to: '/chats', label: 'Чаты', icon: MessageCircle },
   { to: '/orders', label: 'Заказы', icon: PackageSearch },
   { to: '/calendar', label: 'Календарь', icon: CalendarDays },
   { to: '/services', label: 'Услуги', icon: BriefcaseBusiness },
@@ -36,9 +37,11 @@ function AppHeader() {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
-  const isRootScreen = ['/orders', '/services', '/profile'].includes(location.pathname);
+  const isRootScreen = ['/orders', '/chats', '/services', '/profile'].includes(location.pathname);
   const title = location.pathname.startsWith('/orders/')
     ? 'Заказ'
+    : location.pathname.startsWith('/chats/')
+      ? 'Чат'
     : location.pathname === '/schedule'
       ? 'Расписание'
       : location.pathname.includes('/create') || location.pathname.endsWith('/new')

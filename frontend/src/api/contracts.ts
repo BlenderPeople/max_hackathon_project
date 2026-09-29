@@ -10,6 +10,7 @@ export type CurrentUser = {
   first_name: string;
   last_name: string | null;
   max_user_id: string;
+  username: string | null;
 };
 
 export type OrderAction =
@@ -36,6 +37,7 @@ export type OrderEvent = {
 
 export type Order = {
   public_token: string;
+  service_public_token: string;
   title: string;
   description: string;
   status: OrderStatus;
@@ -69,12 +71,35 @@ export type OrderSummary = Pick<
   'public_token' | 'title' | 'description' | 'status' | 'role' | 'price' | 'due_at' | 'available_actions'
 > & {
   business_name: string;
+  business_owner_username: string | null;
   customer_name: string;
   amount_paid: string;
   requires_attention: boolean;
   is_overdue: boolean;
-  scheduled_start_at?: string | null;
-  scheduled_end_at?: string | null;
+  scheduled_start_at: string | null;
+  scheduled_end_at: string | null;
+};
+
+export type ChatMessage = {
+  public_token: string;
+  author_id: string;
+  author_name: string;
+  is_mine: boolean;
+  text: string;
+  created_at: string;
+};
+
+export type Conversation = {
+  public_token: string;
+  service_public_token: string;
+  service_title: string;
+  business_name: string;
+  customer_name: string;
+  peer_name: string;
+  role: 'master' | 'customer';
+  created_at: string;
+  updated_at: string;
+  messages: ChatMessage[];
 };
 
 export type OrderFile = {
@@ -96,6 +121,7 @@ export type Approval = {
 export type OrderDetails = Order & {
   business_name: string;
   business_public_token: string;
+  business_owner_username: string | null;
   customer_name: string;
   created_at: string;
   amount_paid: string;
@@ -107,12 +133,14 @@ export type OrderDetails = Order & {
 
 export type BusinessProfile = {
   public_token: string;
+  handle: string;
   name: string;
   description: string;
   specialization: string;
   experience: string;
   work_features: string;
   owner_name: string;
+  owner_username: string | null;
   avatar_url: string | null;
   rating: number;
   completed_orders: number;

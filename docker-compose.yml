@@ -53,7 +53,8 @@ services:
       context: ./frontend
     environment:
       VITE_API_MODE: ${VITE_API_MODE:-mock}
-      VITE_MAX_BOT_USERNAME: ${VITE_MAX_BOT_USERNAME:-t216_hakaton_bot}
+      # Keep one source of truth for bot links in backend and frontend.
+      VITE_MAX_BOT_USERNAME: ${MAX_BOT_USERNAME}
     ports:
       - "127.0.0.1:5173:5173"
     volumes:

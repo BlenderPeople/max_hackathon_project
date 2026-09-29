@@ -2,7 +2,7 @@ import { Avatar, Button } from '@maxhub/max-ui';
 import { ArrowRight, BadgeCheck, MessageCircle, Share2, Star } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
-import { useService } from '../../api/hooks';
+import { useCreateConversation, useService } from '../../api/hooks';
 import { PageState } from '../../components/PageState';
 import { ServiceCard } from '../../components/ServiceCard';
 
@@ -10,11 +10,17 @@ export function ServiceScreen() {
   const { publicToken = '' } = useParams();
   const navigate = useNavigate();
   const query = useService(publicToken);
+  const createConversation = useCreateConversation();
   if (query.isPending) return <PageState variant="loading" title="Открываем услугу" description="Загружаем описание и профиль мастера." />;
   if (query.isError) return <PageState variant="error" title="Услуга не открылась" description="Ссылка могла устареть. Вернитесь к списку услуг." action={<Button asChild size="small" variant="secondary"><Link to="/services">К услугам</Link></Button>} />;
   const service = query.data;
-  const botName = import.meta.env.VITE_MAX_BOT_USERNAME || 't216_hakaton_bot';
-  const shareUrl = `https://max.ru/${botName}?startapp=service_${service.public_token}`;
+  const botName = String(import.meta.env.VITE_MAX_BOT_USERNAME || '').trim().replace(/^@/, '');
+  const shareUrl = botName
+    ? `https://max.ru/${botName}?startapp=service_${service.public_token}`
+    : window.location.href;
+  const discussWithMaster = () => {
+    createConversation.mutate(service.public_token, { onSuccess: (chat) => navigate(`/chats/${chat.public_token}`) });
+  };
   const shareService = async () => {
     if (navigator.share) {
       try { await navigator.share({ title: service.title, url: shareUrl }); } catch (error) {
@@ -47,7 +53,7 @@ export function ServiceScreen() {
       </section>
       <div className="sticky-actions">
         <Button className="icon-btn" size="medium" variant="secondary" aria-label="Поделиться услугой" onClick={() => void shareService()}><Share2 size={21} /></Button>
-        <Button asChild className="icon-btn" size="medium" variant="secondary" aria-label="Обсудить в MAX"><a href="https://max.ru/t216_hakaton_bot" target="_blank" rel="noreferrer"><MessageCircle size={21} /></a></Button>
+        <Button className="icon-btn" size="medium" variant="secondary" loading={createConversation.isPending} aria-label="Открыть чат с мастером" onClick={discussWithMaster}><MessageCircle size={21} /></Button>
         <Button size="medium" variant="primary" stretched iconAfter={<ArrowRight size={19} />} onClick={() => navigate(`/services/${service.public_token}/create`)}>Заказать</Button>
       </div>
     </div>

@@ -1,11 +1,12 @@
 import { Button } from '@maxhub/max-ui';
 import { Check, CheckCircle2, CircleAlert, MessageCircle, Pencil, Play, RussianRuble } from 'lucide-react';
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import {
   useActivateStage,
   useCompleteOrder,
+  useCreateOrderConversation,
   useDecideApproval,
   useOrder,
   useRecordPayment,
@@ -26,6 +27,8 @@ import { formatDate, formatMoney } from '../../lib/format';
 export function OrderScreen() {
   const { publicToken = '' } = useParams();
   const query = useOrder(publicToken);
+  const navigate = useNavigate();
+  const createConversation = useCreateOrderConversation();
   const decideApproval = useDecideApproval(publicToken);
   const requestApproval = useRequestApproval(publicToken);
   const payment = useRecordPayment(publicToken);
@@ -45,6 +48,9 @@ export function OrderScreen() {
   const currentStage = order.stages.find((stage) => !stage.completed_at);
   const actionError = decideApproval.error || requestApproval.error || payment.error || activateStage.error || completeOrder.error || updateOrder.error;
   const scheduledLabel = order.scheduled_start_at ? new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(order.scheduled_start_at)) : null;
+  const discussWithMaster = () => {
+    createConversation.mutate(order.public_token, { onSuccess: (chat) => navigate(`/chats/${chat.public_token}`) });
+  };
 
   return (
     <div className="order-page">
@@ -102,8 +108,8 @@ export function OrderScreen() {
       <OrderTimeline events={order.timeline} />
 
       <div className="order-discuss">
-        <Button asChild variant="secondary" size="medium" stretched iconBefore={<MessageCircle size={19} />}>
-          <a href="https://max.ru/t216_hakaton_bot" target="_blank" rel="noreferrer">Обсудить в MAX</a>
+        <Button variant="secondary" size="medium" stretched iconBefore={<MessageCircle size={19} />} loading={createConversation.isPending} onClick={discussWithMaster}>
+          Открыть чат
         </Button>
       </div>
 

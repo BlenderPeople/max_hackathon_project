@@ -27,10 +27,10 @@ from app import seed as seed_module  # noqa: E402
 from app.domain.models import Business, Order, Service, User, WebhookReceipt  # noqa: E402
 
 
-def signed_init_data(user_id: int, *, hours_old: int = 0) -> str:
+def signed_init_data(user_id: int, *, hours_old: int = 0, username: str | None = None) -> str:
     values = {
         "auth_date": str(int((datetime.now(timezone.utc) - timedelta(hours=hours_old)).timestamp())),
-        "user": json.dumps({"id": user_id, "first_name": f"User {user_id}"}, separators=(",", ":")),
+        "user": json.dumps({"id": user_id, "first_name": f"User {user_id}", "username": username}, separators=(",", ":")),
     }
     check = "\n".join(f"{key}={value}" for key, value in sorted(values.items()))
     secret = hmac.new(b"WebAppData", b"test-bot-token", hashlib.sha256).digest()
@@ -58,12 +58,12 @@ def test_signed_login_order_permissions_and_booking_flow() -> None:
             invalid = signed_init_data(1) + "&hash=" + "0" * 64
             assert http.post("/api/auth/max", json={"init_data": invalid}).status_code == 401
 
-            def login(user_id: int) -> dict:
-                response = http.post("/api/auth/max", json={"init_data": signed_init_data(user_id)})
+            def login(user_id: int, username: str | None = None) -> dict:
+                response = http.post("/api/auth/max", json={"init_data": signed_init_data(user_id, username=username)})
                 assert response.status_code == 200, response.text
                 return {"Authorization": f"Bearer {response.json()['session_token']}"}
 
-            master = login(101)
+            master = login(101, "Green_Master")
             customer = login(202)
             stranger = login(303)
             service_response = http.post("/api/services", headers=master, json={
@@ -73,11 +73,44 @@ def test_signed_login_order_permissions_and_booking_flow() -> None:
             assert service_response.status_code == 201, service_response.text
             service_token = service_response.json()["public_token"]
             business_token = http.get("/api/businesses/me", headers=master).json()["public_token"]
+            business_handle = http.get("/api/businesses/me", headers=master).json()["handle"]
+            assert business_handle.startswith("master-")
+            by_generated_handle = http.get("/api/businesses/search", params={"q": f"@{business_handle}"})
+            assert by_generated_handle.status_code == 200, by_generated_handle.text
+            assert by_generated_handle.json()[0]["public_token"] == business_token
+            # Static /businesses/search must win over the dynamic public-token route.
+            by_handle = http.get("/api/businesses/search", params={"q": "@green_master"})
+            assert by_handle.status_code == 200, by_handle.text
+            assert by_handle.json()[0]["public_token"] == business_token
+            assert by_handle.json()[0]["owner_username"] == "Green_Master"
+            by_name = http.get("/api/businesses/search", params={"q": "User 101"})
+            assert by_name.status_code == 200 and by_name.json()[0]["public_token"] == business_token
+            assert http.get("/api/businesses/search", params={"q": "@"}).status_code == 422
             # Public business handles use the same opaque token convention as services/orders.
             public_business = http.get(f"/api/businesses/{business_token}")
             assert public_business.status_code == 200
             public_services = http.get(f"/api/businesses/{business_token}/services")
             assert public_services.status_code == 200 and public_services.json()[0]["public_token"] == service_token
+
+            # A customer starts one private Mini App chat per service. Repeated
+            # clicks reopen the same conversation instead of creating copies.
+            chat_response = http.post("/api/conversations", headers=customer, json={"service_public_token": service_token})
+            assert chat_response.status_code == 200, chat_response.text
+            chat_token = chat_response.json()["public_token"]
+            assert chat_response.json()["role"] == "customer"
+            repeated_chat = http.post("/api/conversations", headers=customer, json={"service_public_token": service_token})
+            assert repeated_chat.json()["public_token"] == chat_token
+            assert http.post("/api/conversations", headers=master, json={"service_public_token": service_token}).status_code == 409
+            sent = http.post(f"/api/conversations/{chat_token}/messages", headers=customer, json={"text": "  Добрый день!  "})
+            assert sent.status_code == 200, sent.text
+            assert sent.json()["messages"][0]["text"] == "Добрый день!"
+            master_chat = http.get(f"/api/conversations/{chat_token}", headers=master)
+            assert master_chat.status_code == 200 and master_chat.json()["role"] == "master"
+            assert master_chat.json()["messages"][0]["is_mine"] is False
+            assert http.get(f"/api/conversations/{chat_token}", headers=stranger).status_code == 403
+            assert http.post(f"/api/conversations/{chat_token}/messages", headers=stranger, json={"text": "no"}).status_code == 403
+            assert http.get("/api/conversations", headers=master).json()[0]["public_token"] == chat_token
+
             assert http.post("/api/services", headers=customer, json={
                 "title": "Осмотр", "description": "", "price_from": "100.00", "duration_minutes": 60,
             }).status_code == 201
@@ -94,11 +127,23 @@ def test_signed_login_order_permissions_and_booking_flow() -> None:
                            "scheduled_end_at": slot["end_at"]}
             created = http.post("/api/orders", headers=customer, json=order_input)
             assert created.status_code == 201, created.text
+            assert created.json()["business_owner_username"] == "Green_Master"
             token = created.json()["public_token"]
+            order_chat = http.post(f"/api/orders/{token}/conversation", headers=master)
+            assert order_chat.status_code == 200, order_chat.text
+            assert order_chat.json()["public_token"] == chat_token
+            assert order_chat.json()["role"] == "master"
             public_business = http.get(f"/api/businesses/{business_token}").json()
             assert "bookings" not in public_business["schedule"]
             private_business = http.get("/api/businesses/me", headers=master).json()
             assert private_business["schedule"]["bookings"][0]["customer_name"] == "User 202"
+            cleared_profile = http.patch("/api/businesses/me", headers=master, json={
+                "name": "", "specialization": "", "experience": "",
+                "work_features": "", "description": "", "avatar_data_url": None,
+            })
+            assert cleared_profile.status_code == 200, cleared_profile.text
+            assert cleared_profile.json()["name"] == "User 101"
+            assert cleared_profile.json()["description"] == ""
             with sessions.begin() as db:
                 order = db.scalar(select(Order).where(Order.public_token == token))
                 order.due_at = utcnow() - timedelta(minutes=1)

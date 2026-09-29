@@ -14,6 +14,7 @@ class UserView(BaseModel):
     first_name: str
     last_name: str | None
     max_user_id: str
+    username: str | None
 
 
 class AuthView(BaseModel):
@@ -46,7 +47,7 @@ class ServiceDetails(ServiceView):
 
 
 class BusinessInput(BaseModel):
-    name: str = Field(min_length=1, max_length=120)
+    name: str = Field(max_length=120)
     specialization: str = Field(max_length=120)
     experience: str = Field(max_length=120)
     work_features: str = Field(max_length=300)
@@ -86,6 +87,36 @@ class ScheduleView(ScheduleInput):
 class AvailableSlot(BaseModel):
     start_at: datetime
     end_at: datetime
+
+
+class ConversationCreate(BaseModel):
+    service_public_token: str = Field(min_length=1, max_length=64)
+
+
+class ChatMessageInput(BaseModel):
+    text: str = Field(min_length=1, max_length=4000)
+
+
+class ChatMessageView(BaseModel):
+    public_token: str
+    author_id: str
+    author_name: str
+    is_mine: bool
+    text: str
+    created_at: datetime
+
+
+class ConversationView(BaseModel):
+    public_token: str
+    service_public_token: str
+    service_title: str
+    business_name: str
+    customer_name: str
+    peer_name: str
+    role: Literal["master", "customer"]
+    created_at: datetime
+    updated_at: datetime
+    messages: list[ChatMessageView]
 
 
 class OrderCreate(BaseModel):
@@ -149,6 +180,7 @@ class OrderFileView(BaseModel):
 
 class OrderView(BaseModel):
     public_token: str
+    service_public_token: str
     title: str
     description: str
     status: Literal["new", "approval", "in_progress", "done"]
@@ -160,6 +192,7 @@ class OrderView(BaseModel):
     timeline: list[OrderEventView]
     business_name: str
     business_public_token: str
+    business_owner_username: str | None
     customer_name: str
     created_at: datetime
     amount_paid: str
