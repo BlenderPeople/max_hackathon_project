@@ -56,7 +56,7 @@ export function MasterProfileScreen() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {business.services?.length ? (
             business.services.map(service => (
-              <a key={service.public_token} href={`/services/${service.public_token}/master`} style={{ display: 'block', padding: '16px', border: '1px solid var(--border)', borderRadius: '12px', textDecoration: 'none', color: 'inherit' }}>
+              <a key={service.public_token} href={`/services/${service.public_token}/master`} style={{ display: 'block', padding: '16px', border: '1px solid var(--border)', borderRadius: '12px', textDecoration: 'none', color: 'var(--text)' }}>
                 <strong style={{ display: 'block', fontSize: '16px', marginBottom: '4px' }}>{service.title}</strong>
                 <span style={{ display: 'block', color: 'var(--muted)', fontSize: '14px', marginBottom: '8px' }}>{service.duration}</span>
                 <span style={{ fontWeight: 600 }}>от {service.price_from} ₽</span>

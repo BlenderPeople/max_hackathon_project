@@ -92,7 +92,7 @@ export function CalendarScreen() {
                   justifyContent: 'center',
                   position: 'relative',
                   cursor: 'pointer',
-                  color: 'inherit'
+                  color: 'var(--text)'
                 }}
               >
                 <span style={{ fontSize: '13px', color: 'var(--muted)' }}>

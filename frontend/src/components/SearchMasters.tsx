@@ -21,7 +21,7 @@ export function SearchMasters() {
           placeholder="Найти мастера по @username или имени" 
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '15px' }}
+          style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '15px', color: 'var(--text)' }}
         />
       </div>
       
@@ -36,7 +36,7 @@ export function SearchMasters() {
               const gradient = gradients[seed % gradients.length];
               
               return (
-              <Link key={master.public_token} to={`/master/${master.public_token}`} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: 'var(--surface)', borderRadius: '12px', textDecoration: 'none', color: 'inherit', border: '1px solid var(--border)' }}>
+              <Link key={master.public_token} to={`/master/${master.public_token}`} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: 'var(--surface)', borderRadius: '12px', textDecoration: 'none', color: 'var(--text)', border: '1px solid var(--border)' }}>
                 <Avatar.Container size={48}>
                   {master.avatar_url ? <Avatar.Image src={master.avatar_url} alt="" /> : <Avatar.Text gradient={gradient} style={{ fontSize: '24px' }}>{sticker}</Avatar.Text>}
                 </Avatar.Container>
