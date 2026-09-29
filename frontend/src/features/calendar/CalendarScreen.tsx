@@ -1,3 +1,4 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -22,6 +23,13 @@ export function CalendarScreen() {
     }
   }, []);
   
+  const scrollDrum = (dir: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const offset = dir === 'left' ? -200 : 200;
+      scrollRef.current.scrollBy({ left: offset, behavior: 'smooth' });
+    }
+  };
+
   const displayedOrders = query.data?.filter(order => order.role === roleMode && order.scheduled_start_at) ?? [];
   const ordersByDate = displayedOrders.reduce((acc, order) => {
     const dateStr = order.scheduled_start_at!.split('T')[0];
@@ -51,41 +59,61 @@ export function CalendarScreen() {
         <button type="button" role="tab" aria-selected={roleMode === 'master'} className={roleMode === 'master' ? 'is-active' : ''} onClick={() => setRoleMode('master')}>Моя работа</button>
       </div>
 
-      <div ref={scrollRef} style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '16px 0', scrollbarWidth: 'none' }}>
-        {days.map(d => {
-          const iso = d.toISOString().split('T')[0];
-          const hasOrders = !!ordersByDate[iso];
-          const isSelected = iso === selectedDate;
-          
-          return (
-            <button 
-              key={iso}
-              data-date={iso}
-              onClick={() => setSelectedDate(iso)}
-              style={{
-                flexShrink: 0,
-                width: '60px',
-                height: '70px',
-                borderRadius: '12px',
-                border: isSelected ? '2px solid var(--accent)' : '1px solid var(--border)',
-                background: isSelected ? 'var(--accent-soft)' : 'var(--surface)',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                position: 'relative'
-              }}
-            >
-              <span style={{ fontSize: '13px', color: 'var(--muted)' }}>
-                {new Intl.DateTimeFormat('ru-RU', { weekday: 'short' }).format(d)}
-              </span>
-              <strong style={{ fontSize: '18px' }}>{d.getDate()}</strong>
-              {hasOrders && (
-                <div style={{ position: 'absolute', bottom: '6px', width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent)' }} />
-              )}
-            </button>
-          );
-        })}
+      <div style={{ position: 'relative', margin: '0 -16px' }}>
+        <button 
+          onClick={() => scrollDrum('left')} 
+          style={{ position: 'absolute', left: '0', top: '50%', transform: 'translateY(-50%)', zIndex: 2, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', cursor: 'pointer', color: 'var(--text)' }}
+          aria-label="Назад"
+        >
+          <ChevronLeft size={18} />
+        </button>
+        
+        <div ref={scrollRef} style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '16px', scrollbarWidth: 'none', WebkitMaskImage: 'linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent)', maskImage: 'linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent)' }}>
+          {days.map(d => {
+            const iso = d.toISOString().split('T')[0];
+            const hasOrders = !!ordersByDate[iso];
+            const isSelected = iso === selectedDate;
+            
+            return (
+              <button 
+                key={iso}
+                data-date={iso}
+                onClick={() => setSelectedDate(iso)}
+                style={{
+                  flexShrink: 0,
+                  width: '60px',
+                  height: '70px',
+                  borderRadius: '12px',
+                  border: isSelected ? '2px solid var(--accent)' : '1px solid var(--border)',
+                  background: isSelected ? 'var(--accent-soft)' : 'var(--surface)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  position: 'relative',
+                  cursor: 'pointer',
+                  color: 'inherit'
+                }}
+              >
+                <span style={{ fontSize: '13px', color: 'var(--muted)' }}>
+                  {new Intl.DateTimeFormat('ru-RU', { weekday: 'short' }).format(d)}
+                </span>
+                <strong style={{ fontSize: '18px' }}>{d.getDate()}</strong>
+                {hasOrders && (
+                  <div style={{ position: 'absolute', bottom: '6px', width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent)' }} />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        <button 
+          onClick={() => scrollDrum('right')} 
+          style={{ position: 'absolute', right: '0', top: '50%', transform: 'translateY(-50%)', zIndex: 2, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', cursor: 'pointer', color: 'var(--text)' }}
+          aria-label="Вперед"
+        >
+          <ChevronRight size={18} />
+        </button>
       </div>
 
       {query.isPending ? (
