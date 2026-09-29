@@ -1,5 +1,5 @@
 import { IconButton, MaxUI } from '@maxhub/max-ui';
-import { ArrowLeft, BriefcaseBusiness, Moon, PackageSearch, Sun, UserRound } from 'lucide-react';
+import { ArrowLeft, BriefcaseBusiness, CalendarDays, Moon, PackageSearch, Sun, UserRound } from 'lucide-react';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 
@@ -14,6 +14,7 @@ export function useTheme() {
 
 const navItems = [
   { to: '/orders', label: 'Заказы', icon: PackageSearch },
+  { to: '/calendar', label: 'Календарь', icon: CalendarDays },
   { to: '/services', label: 'Услуги', icon: BriefcaseBusiness },
   { to: '/profile', label: 'Профиль', icon: UserRound },
 ];

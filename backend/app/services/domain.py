@@ -120,6 +120,7 @@ def order_view(order: Order, user: User) -> dict:
         "title": order.title,
         "description": order.description,
         "status": order.status,
+        "role": "master" if order.business.owner_id == user.id else "customer",
         "price": money(order.price),
         "due_at": utc(order.due_at) if order.due_at else None,
         "stages": [{"id": stage.public_token, "position": stage.position, "title": stage.title,

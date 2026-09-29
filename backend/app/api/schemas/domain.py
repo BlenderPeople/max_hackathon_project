@@ -151,6 +151,7 @@ class OrderView(BaseModel):
     title: str
     description: str
     status: Literal["new", "approval", "in_progress", "done"]
+    role: Literal["master", "customer"]
     price: str | None
     due_at: datetime | None
     stages: list[OrderStageView]

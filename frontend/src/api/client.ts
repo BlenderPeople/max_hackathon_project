@@ -46,8 +46,14 @@ export const api = {
   getService(publicToken: string): Promise<ServiceDetails> {
     return isRealApi ? request(`/services/${encodeURIComponent(publicToken)}`) : mockGetService(publicToken);
   },
+  searchBusinesses(query: string): Promise<BusinessProfile[]> {
+    return isRealApi ? request(`/businesses/search?q=${encodeURIComponent(query)}`) : mockGetBusiness().then(b => [b]);
+  },
   getBusiness(): Promise<BusinessProfile> {
     return isRealApi ? request('/businesses/me') : mockGetBusiness();
+  },
+  getBusinessProfile(publicToken: string): Promise<BusinessProfile> {
+    return isRealApi ? request(`/businesses/${encodeURIComponent(publicToken)}`) : mockGetBusiness();
   },
   updateBusiness(input: UpdateBusinessProfileInput): Promise<BusinessProfile> {
     return isRealApi ? request('/businesses/me', { method: 'PATCH', body: JSON.stringify(input) }) : mockUpdateBusiness(input);

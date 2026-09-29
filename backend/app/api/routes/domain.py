@@ -71,6 +71,17 @@ def get_business_services(public_token: str, db: Session = Depends(get_db_sessio
     return [service_view(service) for service in business.services if service.is_active]
 
 
+@router.get("/businesses/search")
+def search_businesses(q: str = Query(..., min_length=1), db: Session = Depends(get_db_session)) -> list[dict]:
+    query = select(Business).join(User, Business.owner_id == User.id).where(
+        Business.name.ilike(f"%{q}%") |
+        User.username.ilike(f"%{q}%") |
+        User.first_name.ilike(f"%{q}%")
+    ).limit(50)
+    businesses = db.scalars(query).all()
+    return [business_view(db, b, include_services=True, include_bookings=False) for b in businesses]
+
+
 @router.get("/businesses/me/schedule", response_model=ScheduleView)
 def my_schedule(db: Session = Depends(get_db_session), user: User = Depends(current_user)) -> dict:
     return schedule_view(db, business_for(db, user))
