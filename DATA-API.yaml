@@ -1,0 +1,123 @@
+version: '1.0'
+team_id: 'Лунные сапоги'
+base_url: 'https://max-order.site/api/'
+checks:
+  - method: POST
+    path: '/auth/max'
+    query_params: {}
+    path_params: {}
+    headers: {}
+    body:
+      init_data: "query_string"
+    role: "customer"
+    expected_status_codes: [200]
+    expected_response_format:
+      content_type: "application/json"
+      json_structure:
+        session_token: "string"
+        expires_at: "string"
+        user: "object"
+
+  - method: GET
+    path: '/me'
+    query_params: {}
+    path_params: {}
+    headers:
+      Authorization: "Bearer <token>"
+    body: {}
+    role: "customer"
+    expected_status_codes: [200]
+    expected_response_format:
+      content_type: "application/json"
+      json_structure:
+        id: "string"
+        name: "string"
+        features: "array"
+
+  - method: GET
+    path: '/businesses/{public_token}'
+    query_params: {}
+    path_params:
+      public_token: "string"
+    headers: {}
+    body: {}
+    role: "anonymous"
+    expected_status_codes: [200, 404]
+    expected_response_format:
+      content_type: "application/json"
+      json_structure:
+        public_token: "string"
+        name: "string"
+        handle: "string"
+        description: "string"
+        rating: "number"
+
+  - method: GET
+    path: '/businesses/{public_token}/services'
+    query_params: {}
+    path_params:
+      public_token: "string"
+    headers: {}
+    body: {}
+    role: "anonymous"
+    expected_status_codes: [200]
+    expected_response_format:
+      content_type: "application/json"
+      json_structure:
+        items: "array"
+
+  - method: POST
+    path: '/orders'
+    query_params: {}
+    path_params: {}
+    headers:
+      Authorization: "Bearer <token>"
+    body:
+      service_public_token: "string"
+      customer_public_token: "string"
+      description: "string"
+      due_at: "string"
+      scheduled_start_at: "string"
+      scheduled_end_at: "string"
+    role: "customer"
+    expected_status_codes: [200, 201]
+    expected_response_format:
+      content_type: "application/json"
+      json_structure:
+        public_token: "string"
+        title: "string"
+        status: "string"
+
+  - method: GET
+    path: '/orders'
+    query_params:
+      filter: "string"
+    path_params: {}
+    headers:
+      Authorization: "Bearer <token>"
+    body: {}
+    role: "master"
+    expected_status_codes: [200]
+    expected_response_format:
+      content_type: "application/json"
+      json_structure:
+        items: "array"
+
+  - method: GET
+    path: '/orders/{public_token}'
+    query_params: {}
+    path_params:
+      public_token: "string"
+    headers:
+      Authorization: "Bearer <token>"
+    body: {}
+    role: "customer"
+    expected_status_codes: [200, 404]
+    expected_response_format:
+      content_type: "application/json"
+      json_structure:
+        public_token: "string"
+        title: "string"
+        status: "string"
+        timeline: "array"
+        stages: "array"
