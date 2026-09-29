@@ -169,7 +169,7 @@ img { display: block; max-width: 100%; }
 .facts-row strong { font-size: 16px; }
 .facts-row span { color: var(--muted); font-size: 11px; }
 .sticky-actions { position: sticky; z-index: 10; bottom: 70px; display: flex; gap: 8px; padding: 12px 16px; background: color-mix(in srgb, var(--surface) 94%, transparent); border-top: 1px solid var(--border); backdrop-filter: blur(15px); }
-.sticky-actions > :first-child { flex: 0 0 52px; }
+.sticky-actions .icon-btn { flex: 0 0 52px; min-width: 52px; padding: 0 !important; display: flex; align-items: center; justify-content: center; }
 
 .create-order-form { max-width: 600px; margin: 0 auto; }
 .form-progress { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 24px; }

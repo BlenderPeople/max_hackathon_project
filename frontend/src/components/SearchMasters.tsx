@@ -38,7 +38,7 @@ export function SearchMasters() {
               return (
               <Link key={master.public_token} to={`/master/${master.public_token}`} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: 'var(--surface)', borderRadius: '12px', textDecoration: 'none', color: 'var(--text)', border: '1px solid var(--border)' }}>
                 <Avatar.Container size={48}>
-                  {master.avatar_url ? <Avatar.Image src={master.avatar_url} alt="" /> : <Avatar.Text gradient={gradient} style={{ fontSize: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', lineHeight: 1, paddingBottom: '2px' }}>{sticker}</Avatar.Text>}
+                  {master.avatar_url ? <Avatar.Image src={master.avatar_url} alt="" /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: `var(--max-color-${gradient})`, fontSize: '24px', lineHeight: 1 }}>{sticker}</div>}
                 </Avatar.Container>
                 <div>
                   <strong style={{ display: 'block', fontSize: '15px' }}>{master.name}</strong>
