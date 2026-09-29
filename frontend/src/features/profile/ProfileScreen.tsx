@@ -22,11 +22,12 @@ export function ProfileScreen() {
     <div className="screen profile-screen">
       <header className="profile-hero">
         <Avatar.Container size={72}>{query.data.avatar_url ? <Avatar.Image src={query.data.avatar_url} alt="" /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: gradient, fontSize: '36px', lineHeight: 1 }}>{sticker}</div>}</Avatar.Container>
-        <div><h1>{query.data.owner_name}<BadgeCheck size={20} /></h1><span>{query.data.name}</span></div>
+        <div><h1>{query.data.owner_name}<BadgeCheck size={20} /></h1><span>{query.data.name} · @{query.data.handle}</span></div>
       </header>
       <div className="profile-metrics"><div><strong>{query.data.rating.toFixed(1)}</strong><span>рейтинг</span></div><div><strong>{query.data.completed_orders}</strong><span>заказов</span></div><div><strong>20 мин</strong><span>ответ</span></div></div>
       <section className="profile-about"><h2>{query.data.specialization}</h2><p>{query.data.description}</p><dl><div><dt>Опыт</dt><dd>{query.data.experience}</dd></div><div><dt>Как работаю</dt><dd>{query.data.work_features}</dd></div></dl></section>
-      {me.data && <section className="profile-about"><h2>Код для заказа</h2><p>Передайте этот код мастеру, если он создаёт заказ для вас.</p><code>{me.data.id}</code></section>}
+      <section className="profile-about"><h2>Код мастера</h2><p>По этому уникальному коду клиенты могут быстро найти ваш профиль.</p><code>@{query.data.handle}</code></section>
+      {me.data && <section className="profile-about"><h2>Код клиента</h2><p>Передайте этот код мастеру, если он создаёт заказ для вас.</p><code>{me.data.id}</code></section>}
       <section className="settings-list">
         <Link to="/profile/edit"><span className="setting-icon"><Pencil size={20} /></span><div><strong>Редактировать профиль</strong><span>Аватар и информация о мастере</span></div><ChevronRight size={20} /></Link>
         <Link to="/services"><span className="setting-icon"><BriefcaseBusiness size={20} /></span><div><strong>Мои услуги</strong><span>{query.data.services.length} активная услуга</span></div><ChevronRight size={20} /></Link>

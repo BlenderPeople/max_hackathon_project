@@ -29,7 +29,7 @@ export function MasterProfileScreen() {
         </Avatar.Container>
         <div>
           <h1>{business.owner_name}<BadgeCheck size={20} /></h1>
-          <span>{business.name}</span>
+          <span>{business.name} · @{business.handle}</span>
         </div>
       </header>
       

@@ -37,6 +37,7 @@ const schedule: AvailabilitySchedule = {
 
 let business: BusinessProfile = {
   public_token: 'biz_demo_master',
+  handle: 'master-demo2026',
   name: 'Зелёный двор',
   description: 'Уход за деревьями и садом в Новосибирске и области.',
   specialization: 'Арбористика и уход за садом',
@@ -76,7 +77,7 @@ const files: OrderFile[] = [
 const approval: Approval = { id: 'approval_price_01', title: 'Согласование стоимости', description: 'Обрезка трёх яблонь и вывоз веток после работ.', amount: '12000.00', status: 'pending' };
 
 function seedOrder(input: Partial<OrderDetails> & Pick<OrderDetails, 'public_token' | 'title' | 'description' | 'status' | 'price' | 'due_at' | 'customer_name' | 'created_at' | 'amount_paid' | 'available_actions' | 'pending_approval' | 'scheduled_start_at' | 'scheduled_end_at' | 'stages' | 'timeline'>): OrderDetails {
-  return { business_name: business.name, files: [], ...input };
+  return { business_name: business.name, files: [], role: 'master', ...input };
 }
 
 let orders: OrderDetails[] = [
@@ -106,7 +107,7 @@ function overlaps(start: number, end: number, otherStart: number, otherEnd: numb
 function toSummary(order: OrderDetails): OrderSummary {
   const due = order.due_at ? new Date(order.due_at).getTime() : Infinity;
   const isOverdue = order.status !== 'done' && due < Date.now();
-  return { role: 'master', public_token: order.public_token, title: order.title, description: order.description, status: order.status, price: order.price, due_at: order.due_at, business_name: order.business_name, customer_name: order.customer_name, amount_paid: order.amount_paid, available_actions: order.available_actions, requires_attention: isOverdue || order.available_actions.includes('decide_approval') || (order.status === 'new' && order.available_actions.includes('update')), is_overdue: isOverdue };
+  return { role: 'master', public_token: order.public_token, title: order.title, description: order.description, status: order.status, price: order.price, due_at: order.due_at, business_name: order.business_name, customer_name: order.customer_name, amount_paid: order.amount_paid, available_actions: order.available_actions, scheduled_start_at: order.scheduled_start_at, scheduled_end_at: order.scheduled_end_at, requires_attention: isOverdue || order.available_actions.includes('decide_approval') || (order.status === 'new' && order.available_actions.includes('update')), is_overdue: isOverdue };
 }
 
 export async function mockGetService(publicToken: string): Promise<ServiceDetails> { await delay(); if (publicToken === 'error') throw new Error('Не удалось загрузить услугу'); const item = services.find((service) => service.public_token === publicToken); if (!item) throw new Error('Услуга не найдена'); return structuredClone(serviceView(item)); }

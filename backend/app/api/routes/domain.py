@@ -2,7 +2,7 @@ from datetime import date
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db_session
@@ -30,7 +30,8 @@ def auth_max(body: MaxAuthInput, db: Session = Depends(get_db_session)) -> dict:
 
 def user_view(user: User) -> dict:
     return {"id": user.public_token, "first_name": user.first_name,
-            "last_name": user.last_name, "max_user_id": user.max_user_id}
+            "last_name": user.last_name, "max_user_id": user.max_user_id,
+            "username": user.username}
 
 
 @router.get("/me", response_model=UserView)
@@ -56,6 +57,27 @@ def update_business(body: BusinessInput, db: Session = Depends(get_db_session), 
     return business_view(db, business)
 
 
+@router.get("/businesses/search")
+def search_businesses(q: str = Query(..., min_length=1, max_length=120), db: Session = Depends(get_db_session)) -> list[dict]:
+    needle = q.strip().lstrip("@")
+    if not needle:
+        raise HTTPException(status_code=422, detail="search query must contain a name or username")
+    # Treat user input as text, not as a SQL LIKE pattern.
+    needle = needle.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    pattern = f"%{needle}%"
+    full_name = User.first_name + " " + func.coalesce(User.last_name, "")
+    query = select(Business).join(User, Business.owner_id == User.id).where(or_(
+        Business.handle.ilike(pattern, escape="\\"),
+        Business.name.ilike(pattern, escape="\\"),
+        User.username.ilike(pattern, escape="\\"),
+        User.first_name.ilike(pattern, escape="\\"),
+        User.last_name.ilike(pattern, escape="\\"),
+        full_name.ilike(pattern, escape="\\"),
+    )).order_by(Business.name).limit(50)
+    businesses = db.scalars(query).all()
+    return [business_view(db, b, include_services=True, include_bookings=False) for b in businesses]
+
+
 @router.get("/businesses/{public_token}")
 def get_business(public_token: str, db: Session = Depends(get_db_session)) -> dict:
     business = db.scalar(select(Business).where(Business.public_token == public_token))
@@ -70,17 +92,6 @@ def get_business_services(public_token: str, db: Session = Depends(get_db_sessio
     if business is None:
         raise HTTPException(status_code=404, detail="business not found")
     return [service_view(service) for service in business.services if service.is_active]
-
-
-@router.get("/businesses/search")
-def search_businesses(q: str = Query(..., min_length=1), db: Session = Depends(get_db_session)) -> list[dict]:
-    query = select(Business).join(User, Business.owner_id == User.id).where(
-        Business.name.ilike(f"%{q}%") |
-        User.username.ilike(f"%{q}%") |
-        User.first_name.ilike(f"%{q}%")
-    ).limit(50)
-    businesses = db.scalars(query).all()
-    return [business_view(db, b, include_services=True, include_bookings=False) for b in businesses]
 
 
 @router.get("/businesses/me/schedule", response_model=ScheduleView)

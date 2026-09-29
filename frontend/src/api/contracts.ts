@@ -10,6 +10,7 @@ export type CurrentUser = {
   first_name: string;
   last_name: string | null;
   max_user_id: string;
+  username: string | null;
 };
 
 export type OrderAction =
@@ -73,6 +74,8 @@ export type OrderSummary = Pick<
   amount_paid: string;
   requires_attention: boolean;
   is_overdue: boolean;
+  scheduled_start_at: string | null;
+  scheduled_end_at: string | null;
 };
 
 export type OrderFile = {
@@ -104,6 +107,7 @@ export type OrderDetails = Order & {
 
 export type BusinessProfile = {
   public_token: string;
+  handle: string;
   name: string;
   description: string;
   specialization: string;

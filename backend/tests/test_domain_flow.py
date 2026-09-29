@@ -27,10 +27,10 @@ from app import seed as seed_module  # noqa: E402
 from app.domain.models import Business, Order, Service, User, WebhookReceipt  # noqa: E402
 
 
-def signed_init_data(user_id: int, *, hours_old: int = 0) -> str:
+def signed_init_data(user_id: int, *, hours_old: int = 0, username: str | None = None) -> str:
     values = {
         "auth_date": str(int((datetime.now(timezone.utc) - timedelta(hours=hours_old)).timestamp())),
-        "user": json.dumps({"id": user_id, "first_name": f"User {user_id}"}, separators=(",", ":")),
+        "user": json.dumps({"id": user_id, "first_name": f"User {user_id}", "username": username}, separators=(",", ":")),
     }
     check = "\n".join(f"{key}={value}" for key, value in sorted(values.items()))
     secret = hmac.new(b"WebAppData", b"test-bot-token", hashlib.sha256).digest()
@@ -58,12 +58,12 @@ def test_signed_login_order_permissions_and_booking_flow() -> None:
             invalid = signed_init_data(1) + "&hash=" + "0" * 64
             assert http.post("/api/auth/max", json={"init_data": invalid}).status_code == 401
 
-            def login(user_id: int) -> dict:
-                response = http.post("/api/auth/max", json={"init_data": signed_init_data(user_id)})
+            def login(user_id: int, username: str | None = None) -> dict:
+                response = http.post("/api/auth/max", json={"init_data": signed_init_data(user_id, username=username)})
                 assert response.status_code == 200, response.text
                 return {"Authorization": f"Bearer {response.json()['session_token']}"}
 
-            master = login(101)
+            master = login(101, "Green_Master")
             customer = login(202)
             stranger = login(303)
             service_response = http.post("/api/services", headers=master, json={
@@ -73,6 +73,18 @@ def test_signed_login_order_permissions_and_booking_flow() -> None:
             assert service_response.status_code == 201, service_response.text
             service_token = service_response.json()["public_token"]
             business_token = http.get("/api/businesses/me", headers=master).json()["public_token"]
+            business_handle = http.get("/api/businesses/me", headers=master).json()["handle"]
+            assert business_handle.startswith("master-")
+            by_generated_handle = http.get("/api/businesses/search", params={"q": f"@{business_handle}"})
+            assert by_generated_handle.status_code == 200, by_generated_handle.text
+            assert by_generated_handle.json()[0]["public_token"] == business_token
+            # Static /businesses/search must win over the dynamic public-token route.
+            by_handle = http.get("/api/businesses/search", params={"q": "@green_master"})
+            assert by_handle.status_code == 200, by_handle.text
+            assert by_handle.json()[0]["public_token"] == business_token
+            by_name = http.get("/api/businesses/search", params={"q": "User 101"})
+            assert by_name.status_code == 200 and by_name.json()[0]["public_token"] == business_token
+            assert http.get("/api/businesses/search", params={"q": "@"}).status_code == 422
             # Public business handles use the same opaque token convention as services/orders.
             public_business = http.get(f"/api/businesses/{business_token}")
             assert public_business.status_code == 200

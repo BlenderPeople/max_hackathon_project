@@ -18,7 +18,7 @@ export function SearchMasters() {
         <Search size={18} color="var(--muted)" style={{ marginRight: '8px' }} />
         <input 
           type="text" 
-          placeholder="Найти мастера по @username или имени" 
+          placeholder="Найти по @коду, username или имени"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '15px', color: 'var(--text)' }}
@@ -28,7 +28,9 @@ export function SearchMasters() {
       {query.length > 0 && search.data && (
         <div className="search-results" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
           {search.data.length === 0 ? (
-            <p className="muted-copy" style={{ textAlign: 'center' }}>Мастера не найдены</p>
+            <p className="muted-copy" style={{ textAlign: 'center' }}>
+              Мастер не найден. Чтобы появиться в поиске, мастер должен хотя бы раз открыть Mini App из MAX.
+            </p>
           ) : (
             search.data.map(master => {
               const seed = master.public_token.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
@@ -42,13 +44,18 @@ export function SearchMasters() {
                 </Avatar.Container>
                 <div>
                   <strong style={{ display: 'block', fontSize: '15px' }}>{master.name}</strong>
-                  <span style={{ display: 'block', fontSize: '13px', color: 'var(--muted)' }}>{master.specialization || 'Мастер'}</span>
+                  <span style={{ display: 'block', fontSize: '13px', color: 'var(--muted)' }}>@{master.handle} · {master.specialization || 'Мастер'}</span>
                 </div>
               </Link>
               );
             })
           )}
         </div>
+      )}
+      {query.trim().length > 0 && search.isError && (
+        <p className="muted-copy" role="alert" style={{ textAlign: 'center' }}>
+          Не удалось найти мастера. Проверьте соединение и попробуйте ещё раз.
+        </p>
       )}
     </div>
   );

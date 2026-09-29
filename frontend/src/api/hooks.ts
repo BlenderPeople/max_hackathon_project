@@ -20,10 +20,12 @@ export function useBusinessProfile(publicToken: string) {
 }
 
 export function useSearchBusinesses(query: string) {
+  const normalizedQuery = query.trim();
   return useQuery({
-    queryKey: ['search_businesses', query],
-    queryFn: () => api.searchBusinesses(query),
-    enabled: query.length > 0,
+    queryKey: ['search_businesses', normalizedQuery],
+    queryFn: () => api.searchBusinesses(normalizedQuery),
+    enabled: normalizedQuery.length > 0 && normalizedQuery !== '@',
+    staleTime: 30_000,
   });
 }
 

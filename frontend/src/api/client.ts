@@ -41,7 +41,7 @@ const isRealApi = import.meta.env.VITE_API_MODE === 'real';
 
 export const api = {
   getMe(): Promise<CurrentUser> {
-    return isRealApi ? request('/me') : Promise.resolve({ id: 'demo_customer', first_name: 'Демо', last_name: 'Клиент', max_user_id: '900000002' });
+    return isRealApi ? request('/me') : Promise.resolve({ id: 'demo_customer', first_name: 'Демо', last_name: 'Клиент', max_user_id: '900000002', username: 'demo_customer' });
   },
   getService(publicToken: string): Promise<ServiceDetails> {
     return isRealApi ? request(`/services/${encodeURIComponent(publicToken)}`) : mockGetService(publicToken);

@@ -53,6 +53,7 @@ def business_view(db: Session, business: Business, *, include_services: bool = T
     completed = db.scalar(select(func.count(Order.id)).where(Order.business_id == business.id, Order.status == "done")) or 0
     result = {
         "public_token": business.public_token,
+        "handle": business.handle,
         "name": business.name,
         "description": business.description,
         "specialization": business.specialization,

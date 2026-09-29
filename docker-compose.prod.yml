@@ -50,7 +50,8 @@ services:
       dockerfile: Dockerfile.production
       args:
         VITE_API_MODE: real
-        VITE_MAX_BOT_USERNAME: ${VITE_MAX_BOT_USERNAME}
+        # The frontend link must point to the same bot as webhook delivery.
+        VITE_MAX_BOT_USERNAME: ${MAX_BOT_USERNAME}
     restart: unless-stopped
     env_file: .env
     environment:

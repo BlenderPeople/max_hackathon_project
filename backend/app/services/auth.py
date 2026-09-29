@@ -44,6 +44,9 @@ def validate_init_data(init_data: str) -> dict:
             raise ValueError("invalid user fields")
         if len(user["first_name"]) > 255 or (user.get("last_name") is not None and (not isinstance(user["last_name"], str) or len(user["last_name"]) > 255)):
             raise ValueError("invalid name")
+        username = user.get("username")
+        if username is not None and (not isinstance(username, str) or len(username) > 255):
+            raise ValueError("invalid username")
         return user
     except (ValueError, TypeError, OverflowError, UnicodeError):
         raise HTTPException(status_code=401, detail="invalid or expired MAX initData") from None
@@ -54,15 +57,21 @@ def digest(token: str) -> str:
 
 
 def create_session(db: Session, max_user: dict) -> tuple[User, str, datetime]:
+    username = max_user.get("username")
+    if isinstance(username, str):
+        # MAX sends a handle without @; users type it with @ in the search UI.
+        username = username.strip().lstrip("@") or None
     user = db.scalar(select(User).where(User.max_user_id == str(max_user["id"])))
     if user is None:
-        user = User(max_user_id=str(max_user["id"]), first_name=max_user["first_name"], last_name=max_user.get("last_name"))
+        user = User(max_user_id=str(max_user["id"]), username=username,
+                    first_name=max_user["first_name"], last_name=max_user.get("last_name"))
         db.add(user)
         db.flush()
         db.add(Business(owner=user, name=f"{user.first_name} — мастер"))
     else:
         user.first_name = max_user["first_name"]
         user.last_name = max_user.get("last_name")
+        user.username = username
     token = token_urlsafe(32)
     expires_at = utcnow() + timedelta(seconds=settings.session_ttl_seconds)
     db.add(SessionToken(token_hash=digest(token), user=user, expires_at=expires_at))

@@ -14,6 +14,7 @@ class UserView(BaseModel):
     first_name: str
     last_name: str | None
     max_user_id: str
+    username: str | None
 
 
 class AuthView(BaseModel):

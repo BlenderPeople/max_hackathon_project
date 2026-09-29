@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from decimal import Decimal
-from secrets import token_urlsafe
+from secrets import choice, token_urlsafe
+from string import ascii_lowercase, digits
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, JSON, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -16,6 +17,12 @@ def new_token() -> str:
     return token_urlsafe(24)
 
 
+def new_business_handle() -> str:
+    """Generate a short public master handle; uniqueness is enforced by DB."""
+    alphabet = ascii_lowercase + digits
+    return "master-" + "".join(choice(alphabet) for _ in range(8))
+
+
 def default_weekly() -> list[dict]:
     return [
         {"weekday": day, "enabled": day <= 5, "intervals": [{"id": f"day-{day}", "start": "10:00", "end": "18:00"}] if day <= 5 else []}
@@ -28,6 +35,8 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     public_token: Mapped[str] = mapped_column(String(64), unique=True, default=new_token)
     max_user_id: Mapped[str] = mapped_column(String(64), unique=True)
+    # MAX usernames are optional, so this cannot be a required identifier.
+    username: Mapped[str | None] = mapped_column(String(255), index=True)
     first_name: Mapped[str] = mapped_column(String(255))
     last_name: Mapped[str | None] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
@@ -37,6 +46,7 @@ class Business(Base):
     __tablename__ = "businesses"
     id: Mapped[int] = mapped_column(primary_key=True)
     public_token: Mapped[str] = mapped_column(String(64), unique=True, default=new_token)
+    handle: Mapped[str] = mapped_column(String(32), unique=True, index=True, default=new_business_handle)
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True)
     name: Mapped[str] = mapped_column(String(255))
     description: Mapped[str] = mapped_column(Text, default="")
