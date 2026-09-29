@@ -33,7 +33,7 @@ export function EditOrderDialog({ open, description: initialDescription, dueAt: 
         <label><span>Описание</span><Textarea value={description} rows={4}  onChange={(event) => setDescription(event.target.value)} /></label>
         <label><span>Итоговая цена, ₽</span><input className="plain-input" inputMode="decimal" value={price} onChange={(event) => setPrice(event.target.value.replace(',', '.'))} /></label>
         <label><span>Желаемый срок</span><input className="plain-input" type="date" min={new Date().toLocaleDateString('en-CA')} value={dueAt} onChange={(event) => setDueAt(event.target.value)} /></label>
-        <Button type="submit" size="medium" stretched loading={loading} disabled={description.trim().length < 12 || (price !== '' && (!Number.isFinite(Number(price)) || Number(price) < 0))}>Сохранить</Button>
+        <Button type="submit" size="medium" stretched loading={loading} disabled={description.trim().length < 1 || (price !== '' && (!Number.isFinite(Number(price)) || Number(price) < 0))}>Сохранить</Button>
       </form>
     </Dialog>
   );
