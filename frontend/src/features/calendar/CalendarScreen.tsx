@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { useOrders } from '../../api/hooks';
@@ -10,7 +10,17 @@ export function CalendarScreen() {
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
+  const scrollRef = useRef<HTMLDivElement>(null);
   const query = useOrders('all');
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      const selectedEl = scrollRef.current.querySelector(`[data-date="${selectedDate}"]`);
+      if (selectedEl) {
+        selectedEl.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
+      }
+    }
+  }, []);
   
   const displayedOrders = query.data?.filter(order => order.role === roleMode && order.scheduled_start_at) ?? [];
   const ordersByDate = displayedOrders.reduce((acc, order) => {
@@ -20,11 +30,11 @@ export function CalendarScreen() {
     return acc;
   }, {} as Record<string, typeof displayedOrders>);
 
-  // Simple 7-day strip for demo purposes
+  // Scrollable drum of 61 days (30 days back, 30 days forward)
   const today = new Date();
-  const days = Array.from({ length: 7 }, (_, i) => {
+  const days = Array.from({ length: 61 }, (_, i) => {
     const d = new Date(today);
-    d.setDate(today.getDate() + i - 1); // Yesterday + 6 days
+    d.setDate(today.getDate() + i - 30);
     return d;
   });
 
@@ -41,7 +51,7 @@ export function CalendarScreen() {
         <button type="button" role="tab" aria-selected={roleMode === 'master'} className={roleMode === 'master' ? 'is-active' : ''} onClick={() => setRoleMode('master')}>Моя работа</button>
       </div>
 
-      <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '16px 0', scrollbarWidth: 'none' }}>
+      <div ref={scrollRef} style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '16px 0', scrollbarWidth: 'none' }}>
         {days.map(d => {
           const iso = d.toISOString().split('T')[0];
           const hasOrders = !!ordersByDate[iso];
@@ -50,6 +60,7 @@ export function CalendarScreen() {
           return (
             <button 
               key={iso}
+              data-date={iso}
               onClick={() => setSelectedDate(iso)}
               style={{
                 flexShrink: 0,

@@ -15,11 +15,17 @@ export function MasterProfileScreen() {
 
   const business = query.data;
 
+  const stickers = ['🐶', '🐱', '🐼', '🦊', '🐻', '🐨', '🐸', '🐢', '🦖', '🐙'];
+  const gradients = ['green', 'blue', 'orange', 'purple', 'red'] as const;
+  const seed = publicToken.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const sticker = stickers[seed % stickers.length];
+  const gradient = gradients[seed % gradients.length];
+
   return (
     <div className="screen public-profile">
       <header className="public-profile-header">
         <Avatar.Container size={82}>
-          {business.avatar_url ? <Avatar.Image src={business.avatar_url} alt="" /> : <Avatar.Text gradient="green">АВ</Avatar.Text>}
+          {business.avatar_url ? <Avatar.Image src={business.avatar_url} alt="" /> : <Avatar.Text gradient={gradient} style={{ fontSize: '32px' }}>{sticker}</Avatar.Text>}
         </Avatar.Container>
         <div>
           <p className="overline">{business.specialization}</p>

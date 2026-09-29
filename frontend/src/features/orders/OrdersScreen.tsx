@@ -33,7 +33,7 @@ export function OrdersScreen() {
         <button type="button" role="tab" aria-selected={roleMode === 'customer'} className={roleMode === 'customer' ? 'is-active' : ''} onClick={() => setRoleMode('customer')}>Я заказчик</button>
         <button type="button" role="tab" aria-selected={roleMode === 'master'} className={roleMode === 'master' ? 'is-active' : ''} onClick={() => setRoleMode('master')}>Моя работа</button>
       </div>
-      {roleMode === 'customer' && <SearchMasters />}
+      <SearchMasters />
       <div className="filter-tabs" role="tablist" aria-label="Фильтр заказов">
         {filters.map((item) => (
           <button key={item.value} type="button" role="tab" aria-selected={filter === item.value} className={filter === item.value ? 'is-active' : ''} onClick={() => setFilter(item.value)}>{item.label}</button>

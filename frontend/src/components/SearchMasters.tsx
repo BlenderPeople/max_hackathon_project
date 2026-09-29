@@ -1,3 +1,4 @@
+import { Avatar } from '@maxhub/max-ui';
 import { Search } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -7,6 +8,9 @@ import { useSearchBusinesses } from '../api/hooks';
 export function SearchMasters() {
   const [query, setQuery] = useState('');
   const search = useSearchBusinesses(query);
+
+  const stickers = ['🐶', '🐱', '🐼', '🦊', '🐻', '🐨', '🐸', '🐢', '🦖', '🐙'];
+  const gradients = ['green', 'blue', 'orange', 'purple', 'red'] as const;
 
   return (
     <div className="search-masters">
@@ -26,17 +30,23 @@ export function SearchMasters() {
           {search.data.length === 0 ? (
             <p className="muted-copy" style={{ textAlign: 'center' }}>Мастера не найдены</p>
           ) : (
-            search.data.map(master => (
+            search.data.map(master => {
+              const seed = master.public_token.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+              const sticker = stickers[seed % stickers.length];
+              const gradient = gradients[seed % gradients.length];
+              
+              return (
               <Link key={master.public_token} to={`/master/${master.public_token}`} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: 'var(--surface)', borderRadius: '12px', textDecoration: 'none', color: 'inherit', border: '1px solid var(--border)' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--border)', overflow: 'hidden' }}>
-                  {master.avatar_url && <img src={master.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
-                </div>
+                <Avatar.Container size={48}>
+                  {master.avatar_url ? <Avatar.Image src={master.avatar_url} alt="" /> : <Avatar.Text gradient={gradient} style={{ fontSize: '24px' }}>{sticker}</Avatar.Text>}
+                </Avatar.Container>
                 <div>
                   <strong style={{ display: 'block', fontSize: '15px' }}>{master.name}</strong>
                   <span style={{ display: 'block', fontSize: '13px', color: 'var(--muted)' }}>{master.specialization || 'Мастер'}</span>
                 </div>
               </Link>
-            ))
+              );
+            })
           )}
         </div>
       )}
