@@ -78,7 +78,7 @@ const files: OrderFile[] = [
 const approval: Approval = { id: 'approval_price_01', title: 'Согласование стоимости', description: 'Обрезка трёх яблонь и вывоз веток после работ.', amount: '12000.00', status: 'pending' };
 
 function seedOrder(input: Partial<OrderDetails> & Pick<OrderDetails, 'public_token' | 'title' | 'description' | 'status' | 'price' | 'due_at' | 'customer_name' | 'created_at' | 'amount_paid' | 'available_actions' | 'pending_approval' | 'scheduled_start_at' | 'scheduled_end_at' | 'stages' | 'timeline'>): OrderDetails {
-  return { business_name: business.name, business_owner_username: business.owner_username, files: [], role: 'master', ...input };
+  return { service_public_token: services[0].public_token, business_name: business.name, business_owner_username: business.owner_username, files: [], role: 'master', ...input };
 }
 
 let orders: OrderDetails[] = [

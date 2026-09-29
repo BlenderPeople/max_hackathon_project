@@ -2,8 +2,7 @@ import { Avatar, Button } from '@maxhub/max-ui';
 import { ArrowRight, BadgeCheck, MessageCircle, Share2, Star } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
-import { useService } from '../../api/hooks';
-import { openMaxLink } from '../../bridge/maxBridge';
+import { useCreateConversation, useService } from '../../api/hooks';
 import { PageState } from '../../components/PageState';
 import { ServiceCard } from '../../components/ServiceCard';
 
@@ -11,21 +10,16 @@ export function ServiceScreen() {
   const { publicToken = '' } = useParams();
   const navigate = useNavigate();
   const query = useService(publicToken);
+  const createConversation = useCreateConversation();
   if (query.isPending) return <PageState variant="loading" title="Открываем услугу" description="Загружаем описание и профиль мастера." />;
   if (query.isError) return <PageState variant="error" title="Услуга не открылась" description="Ссылка могла устареть. Вернитесь к списку услуг." action={<Button asChild size="small" variant="secondary"><Link to="/services">К услугам</Link></Button>} />;
   const service = query.data;
   const botName = String(import.meta.env.VITE_MAX_BOT_USERNAME || '').trim().replace(/^@/, '');
-  const masterUsername = service.business.owner_username?.trim().replace(/^@/, '') || null;
   const shareUrl = botName
     ? `https://max.ru/${botName}?startapp=service_${service.public_token}`
     : window.location.href;
-  const discussUrl = masterUsername ? `https://max.ru/${masterUsername}` : null;
   const discussWithMaster = () => {
-    if (discussUrl) {
-      openMaxLink(discussUrl);
-      return;
-    }
-    window.alert('У мастера не указан публичный username в MAX. Попросите мастера открыть Mini App ещё раз или добавить username в MAX.');
+    createConversation.mutate(service.public_token, { onSuccess: (chat) => navigate(`/chats/${chat.public_token}`) });
   };
   const shareService = async () => {
     if (navigator.share) {
@@ -60,7 +54,7 @@ export function ServiceScreen() {
       </section>
       <div className="sticky-actions">
         <Button className="icon-btn" size="medium" variant="secondary" aria-label="Поделиться услугой" onClick={() => void shareService()}><Share2 size={21} /></Button>
-        <Button className="icon-btn" size="medium" variant="secondary" aria-label="Открыть чат с мастером в MAX" onClick={discussWithMaster}><MessageCircle size={21} /></Button>
+        <Button className="icon-btn" size="medium" variant="secondary" loading={createConversation.isPending} aria-label="Открыть чат с мастером" onClick={discussWithMaster}><MessageCircle size={21} /></Button>
         <Button size="medium" variant="primary" stretched iconAfter={<ArrowRight size={19} />} onClick={() => navigate(`/services/${service.public_token}/create`)}>Заказать</Button>
       </div>
     </div>

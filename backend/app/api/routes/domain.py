@@ -7,16 +7,17 @@ from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db_session
 from app.api.schemas.domain import (
-    ApprovalDecision, ApprovalRequest, AuthView, AvailableSlot, BusinessInput, MaxAuthInput,
+    ApprovalDecision, ApprovalRequest, AuthView, AvailableSlot, BusinessInput, ChatMessageInput,
+    ConversationCreate, ConversationView, MaxAuthInput,
     OrderCreate, OrderEventView, OrderUpdate, OrderView, PaymentInput, ScheduleInput,
     ScheduleView, ServiceDetails, ServiceInput, UserView,
 )
-from app.domain.models import Approval, Business, Order, OrderStage, Payment, Service, User, utcnow
+from app.domain.models import Approval, Business, ChatMessage, Conversation, Order, OrderStage, Payment, Service, User, utcnow
 from app.services.auth import create_session, current_user, validate_init_data
 from app.services.domain import (
     ZERO, actions_for, add_event, business_for, business_view, create_order, is_overdue,
-    latest_approval, money, order_view, paid_amount, require_owner, schedule_view,
-    service_details, service_view, slots_for, validate_schedule, visible_order,
+    conversation_view, latest_approval, money, order_view, paid_amount, require_owner, schedule_view,
+    service_details, service_view, slots_for, validate_schedule, visible_conversation, visible_order,
 )
 
 router = APIRouter(tags=["domain"])
@@ -158,6 +159,51 @@ def update_service(public_token: str, body: ServiceInput, db: Session = Depends(
     return service_details(db, service)
 
 
+@router.get("/conversations", response_model=list[ConversationView])
+def list_conversations(db: Session = Depends(get_db_session), user: User = Depends(current_user)) -> list[dict]:
+    conversations = db.scalars(
+        select(Conversation).join(Business, Conversation.business_id == Business.id)
+        .where((Conversation.customer_id == user.id) | (Business.owner_id == user.id))
+        .order_by(Conversation.updated_at.desc())
+    ).all()
+    return [conversation_view(conversation, user) for conversation in conversations]
+
+
+@router.post("/conversations", response_model=ConversationView)
+def create_conversation(body: ConversationCreate, db: Session = Depends(get_db_session), user: User = Depends(current_user)) -> dict:
+    service = db.scalar(select(Service).where(Service.public_token == body.service_public_token, Service.is_active.is_(True)))
+    if service is None:
+        raise HTTPException(status_code=404, detail="service not found")
+    if service.business.owner_id == user.id:
+        raise HTTPException(status_code=409, detail="cannot start a conversation with yourself")
+    conversation = db.scalar(select(Conversation).where(
+        Conversation.service_id == service.id, Conversation.customer_id == user.id,
+    ))
+    if conversation is None:
+        conversation = Conversation(business=service.business, service=service, customer=user)
+        db.add(conversation)
+        db.commit()
+        db.refresh(conversation)
+    return conversation_view(conversation, user)
+
+
+@router.get("/conversations/{public_token}", response_model=ConversationView)
+def get_conversation(public_token: str, db: Session = Depends(get_db_session), user: User = Depends(current_user)) -> dict:
+    return conversation_view(visible_conversation(db, public_token, user), user)
+
+
+@router.post("/conversations/{public_token}/messages", response_model=ConversationView)
+def send_message(public_token: str, body: ChatMessageInput, db: Session = Depends(get_db_session), user: User = Depends(current_user)) -> dict:
+    conversation = visible_conversation(db, public_token, user)
+    text = body.text.strip()
+    if not text:
+        raise HTTPException(status_code=422, detail="message cannot be empty")
+    conversation.messages.append(ChatMessage(author=user, text=text))
+    conversation.updated_at = utcnow()
+    db.commit()
+    return conversation_view(conversation, user)
+
+
 @router.get("/orders", response_model=list[OrderView])
 def list_orders(
     filter: str = Query(default="all", pattern="^(all|attention|active|overdue|completed)$"),
@@ -183,6 +229,20 @@ def new_order(body: OrderCreate, db: Session = Depends(get_db_session), user: Us
     if service is None:
         raise HTTPException(status_code=404, detail="service not found")
     return order_view(create_order(db, user, service, body), user)
+
+
+@router.post("/orders/{public_token}/conversation", response_model=ConversationView)
+def order_conversation(public_token: str, db: Session = Depends(get_db_session), user: User = Depends(current_user)) -> dict:
+    order = visible_order(db, public_token, user)
+    conversation = db.scalar(select(Conversation).where(
+        Conversation.service_id == order.service_id, Conversation.customer_id == order.customer_id,
+    ))
+    if conversation is None:
+        conversation = Conversation(business=order.business, service=order.service, customer=order.customer)
+        db.add(conversation)
+        db.commit()
+        db.refresh(conversation)
+    return conversation_view(conversation, user)
 
 
 @router.get("/orders/{public_token}", response_model=OrderView)

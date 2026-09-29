@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.api.schemas.domain import OrderCreate, ScheduleInput
-from app.domain.models import Approval, Business, NotificationOutbox, Order, OrderEvent, OrderStage, Service, User, utcnow
+from app.domain.models import Approval, Business, Conversation, NotificationOutbox, Order, OrderEvent, OrderStage, Service, User, utcnow
 
 
 ZERO = Decimal("0.00")
@@ -119,6 +119,7 @@ def order_view(order: Order, user: User) -> dict:
     actions = actions_for(order, user)
     return {
         "public_token": order.public_token,
+        "service_public_token": order.service.public_token,
         "title": order.title,
         "description": order.description,
         "status": order.status,
@@ -145,6 +146,39 @@ def order_view(order: Order, user: User) -> dict:
         "requires_attention": is_overdue(order) or "decide_approval" in actions
         or (order.business.owner_id == user.id and order.status == "new"),
         "is_overdue": is_overdue(order),
+    }
+
+
+def visible_conversation(db: Session, token: str, user: User) -> Conversation:
+    conversation = db.scalar(select(Conversation).where(Conversation.public_token == token))
+    if conversation is None:
+        raise HTTPException(status_code=404, detail="conversation not found")
+    if user.id not in (conversation.customer_id, conversation.business.owner_id):
+        raise HTTPException(status_code=403, detail="conversation access denied")
+    return conversation
+
+
+def conversation_view(conversation: Conversation, user: User) -> dict:
+    is_master = conversation.business.owner_id == user.id
+    peer = conversation.customer if is_master else conversation.business.owner
+    return {
+        "public_token": conversation.public_token,
+        "service_public_token": conversation.service.public_token,
+        "service_title": conversation.service.title,
+        "business_name": conversation.business.name,
+        "customer_name": person_name(conversation.customer),
+        "peer_name": person_name(peer),
+        "role": "master" if is_master else "customer",
+        "created_at": utc(conversation.created_at),
+        "updated_at": utc(conversation.updated_at),
+        "messages": [{
+            "public_token": message.public_token,
+            "author_id": message.author.public_token,
+            "author_name": person_name(message.author),
+            "is_mine": message.author_id == user.id,
+            "text": message.text,
+            "created_at": utc(message.created_at),
+        } for message in conversation.messages],
     }
 
 

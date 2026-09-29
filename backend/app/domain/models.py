@@ -76,6 +76,34 @@ class Service(Base):
     business: Mapped[Business] = relationship(back_populates="services")
 
 
+class Conversation(Base):
+    __tablename__ = "conversations"
+    __table_args__ = (UniqueConstraint("service_id", "customer_id"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    public_token: Mapped[str] = mapped_column(String(64), unique=True, default=new_token)
+    business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id"), index=True)
+    service_id: Mapped[int] = mapped_column(ForeignKey("services.id"), index=True)
+    customer_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow, index=True)
+    business: Mapped[Business] = relationship()
+    service: Mapped[Service] = relationship()
+    customer: Mapped[User] = relationship(foreign_keys=[customer_id])
+    messages: Mapped[list["ChatMessage"]] = relationship(order_by="ChatMessage.id", back_populates="conversation")
+
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    public_token: Mapped[str] = mapped_column(String(64), unique=True, default=new_token)
+    conversation_id: Mapped[int] = mapped_column(ForeignKey("conversations.id", ondelete="CASCADE"), index=True)
+    author_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    text: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    conversation: Mapped[Conversation] = relationship(back_populates="messages")
+    author: Mapped[User] = relationship()
+
+
 class Order(Base):
     __tablename__ = "orders"
     id: Mapped[int] = mapped_column(primary_key=True)

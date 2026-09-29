@@ -37,6 +37,7 @@ export type OrderEvent = {
 
 export type Order = {
   public_token: string;
+  service_public_token: string;
   title: string;
   description: string;
   status: OrderStatus;
@@ -77,6 +78,28 @@ export type OrderSummary = Pick<
   is_overdue: boolean;
   scheduled_start_at: string | null;
   scheduled_end_at: string | null;
+};
+
+export type ChatMessage = {
+  public_token: string;
+  author_id: string;
+  author_name: string;
+  is_mine: boolean;
+  text: string;
+  created_at: string;
+};
+
+export type Conversation = {
+  public_token: string;
+  service_public_token: string;
+  service_title: string;
+  business_name: string;
+  customer_name: string;
+  peer_name: string;
+  role: 'master' | 'customer';
+  created_at: string;
+  updated_at: string;
+  messages: ChatMessage[];
 };
 
 export type OrderFile = {

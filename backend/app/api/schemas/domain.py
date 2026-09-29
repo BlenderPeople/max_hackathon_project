@@ -89,6 +89,36 @@ class AvailableSlot(BaseModel):
     end_at: datetime
 
 
+class ConversationCreate(BaseModel):
+    service_public_token: str = Field(min_length=1, max_length=64)
+
+
+class ChatMessageInput(BaseModel):
+    text: str = Field(min_length=1, max_length=4000)
+
+
+class ChatMessageView(BaseModel):
+    public_token: str
+    author_id: str
+    author_name: str
+    is_mine: bool
+    text: str
+    created_at: datetime
+
+
+class ConversationView(BaseModel):
+    public_token: str
+    service_public_token: str
+    service_title: str
+    business_name: str
+    customer_name: str
+    peer_name: str
+    role: Literal["master", "customer"]
+    created_at: datetime
+    updated_at: datetime
+    messages: list[ChatMessageView]
+
+
 class OrderCreate(BaseModel):
     service_public_token: str
     customer_public_token: str | None = None
@@ -150,6 +180,7 @@ class OrderFileView(BaseModel):
 
 class OrderView(BaseModel):
     public_token: str
+    service_public_token: str
     title: str
     description: str
     status: Literal["new", "approval", "in_progress", "done"]

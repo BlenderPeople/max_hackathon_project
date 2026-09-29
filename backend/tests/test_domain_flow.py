@@ -91,6 +91,26 @@ def test_signed_login_order_permissions_and_booking_flow() -> None:
             assert public_business.status_code == 200
             public_services = http.get(f"/api/businesses/{business_token}/services")
             assert public_services.status_code == 200 and public_services.json()[0]["public_token"] == service_token
+
+            # A customer starts one private Mini App chat per service. Repeated
+            # clicks reopen the same conversation instead of creating copies.
+            chat_response = http.post("/api/conversations", headers=customer, json={"service_public_token": service_token})
+            assert chat_response.status_code == 200, chat_response.text
+            chat_token = chat_response.json()["public_token"]
+            assert chat_response.json()["role"] == "customer"
+            repeated_chat = http.post("/api/conversations", headers=customer, json={"service_public_token": service_token})
+            assert repeated_chat.json()["public_token"] == chat_token
+            assert http.post("/api/conversations", headers=master, json={"service_public_token": service_token}).status_code == 409
+            sent = http.post(f"/api/conversations/{chat_token}/messages", headers=customer, json={"text": "  Добрый день!  "})
+            assert sent.status_code == 200, sent.text
+            assert sent.json()["messages"][0]["text"] == "Добрый день!"
+            master_chat = http.get(f"/api/conversations/{chat_token}", headers=master)
+            assert master_chat.status_code == 200 and master_chat.json()["role"] == "master"
+            assert master_chat.json()["messages"][0]["is_mine"] is False
+            assert http.get(f"/api/conversations/{chat_token}", headers=stranger).status_code == 403
+            assert http.post(f"/api/conversations/{chat_token}/messages", headers=stranger, json={"text": "no"}).status_code == 403
+            assert http.get("/api/conversations", headers=master).json()[0]["public_token"] == chat_token
+
             assert http.post("/api/services", headers=customer, json={
                 "title": "Осмотр", "description": "", "price_from": "100.00", "duration_minutes": 60,
             }).status_code == 201
@@ -109,6 +129,10 @@ def test_signed_login_order_permissions_and_booking_flow() -> None:
             assert created.status_code == 201, created.text
             assert created.json()["business_owner_username"] == "Green_Master"
             token = created.json()["public_token"]
+            order_chat = http.post(f"/api/orders/{token}/conversation", headers=master)
+            assert order_chat.status_code == 200, order_chat.text
+            assert order_chat.json()["public_token"] == chat_token
+            assert order_chat.json()["role"] == "master"
             public_business = http.get(f"/api/businesses/{business_token}").json()
             assert "bookings" not in public_business["schedule"]
             private_business = http.get("/api/businesses/me", headers=master).json()

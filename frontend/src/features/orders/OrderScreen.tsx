@@ -1,11 +1,12 @@
 import { Button } from '@maxhub/max-ui';
 import { Check, CheckCircle2, CircleAlert, MessageCircle, Pencil, Play, RussianRuble } from 'lucide-react';
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import {
   useActivateStage,
   useCompleteOrder,
+  useCreateOrderConversation,
   useDecideApproval,
   useOrder,
   useRecordPayment,
@@ -21,12 +22,13 @@ import { PageState } from '../../components/PageState';
 import { PaymentDialog } from '../../components/PaymentDialog';
 import { SectionHeader } from '../../components/SectionHeader';
 import { StatusBadge } from '../../components/StatusBadge';
-import { openMaxLink } from '../../bridge/maxBridge';
 import { formatDate, formatMoney } from '../../lib/format';
 
 export function OrderScreen() {
   const { publicToken = '' } = useParams();
   const query = useOrder(publicToken);
+  const navigate = useNavigate();
+  const createConversation = useCreateOrderConversation();
   const decideApproval = useDecideApproval(publicToken);
   const requestApproval = useRequestApproval(publicToken);
   const payment = useRecordPayment(publicToken);
@@ -46,14 +48,8 @@ export function OrderScreen() {
   const currentStage = order.stages.find((stage) => !stage.completed_at);
   const actionError = decideApproval.error || requestApproval.error || payment.error || activateStage.error || completeOrder.error || updateOrder.error;
   const scheduledLabel = order.scheduled_start_at ? new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(order.scheduled_start_at)) : null;
-  const masterUsername = order.business_owner_username?.trim().replace(/^@/, '') || null;
-  const discussUrl = masterUsername ? `https://max.ru/${masterUsername}` : null;
   const discussWithMaster = () => {
-    if (discussUrl) {
-      openMaxLink(discussUrl);
-      return;
-    }
-    window.alert('У мастера не указан публичный username в MAX. Попросите мастера открыть Mini App ещё раз или добавить username в MAX.');
+    createConversation.mutate(order.public_token, { onSuccess: (chat) => navigate(`/chats/${chat.public_token}`) });
   };
 
   return (
@@ -107,8 +103,8 @@ export function OrderScreen() {
       <OrderTimeline events={order.timeline} />
 
       <div className="order-discuss">
-        <Button variant="secondary" size="medium" stretched iconBefore={<MessageCircle size={19} />} onClick={discussWithMaster}>
-          Обсудить в MAX
+        <Button variant="secondary" size="medium" stretched iconBefore={<MessageCircle size={19} />} loading={createConversation.isPending} onClick={discussWithMaster}>
+          Открыть чат
         </Button>
       </div>
 

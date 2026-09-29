@@ -18,6 +18,8 @@ import { ServicesScreen } from './features/services/ServicesScreen';
 import { ServiceEditScreen } from './features/services/ServiceEditScreen';
 import { ScheduleScreen } from './features/schedule/ScheduleScreen';
 import { CalendarScreen } from './features/calendar/CalendarScreen';
+import { ChatsScreen } from './features/chat/ChatsScreen';
+import { ChatScreen } from './features/chat/ChatScreen';
 import { resolveStartRoute } from './routing/startParam';
 
 function RootRoute() {
@@ -60,6 +62,8 @@ export default function App() {
           <Route path="/orders" element={<OrdersScreen />} />
           <Route path="/orders/:publicToken" element={<OrderScreen />} />
           <Route path="/calendar" element={<CalendarScreen />} />
+          <Route path="/chats" element={<ChatsScreen />} />
+          <Route path="/chats/:publicToken" element={<ChatScreen />} />
           <Route path="/services" element={<ServicesScreen />} />
           <Route path="/services/new" element={<ServiceEditScreen />} />
           <Route path="/services/:publicToken" element={<ServiceScreen />} />

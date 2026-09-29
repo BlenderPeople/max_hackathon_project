@@ -65,6 +65,29 @@ export function useOrder(publicToken: string) {
   return useQuery({ queryKey: ['order', publicToken], queryFn: () => api.getOrder(publicToken) });
 }
 
+export function useConversations() {
+  return useQuery({ queryKey: ['conversations'], queryFn: api.getConversations, refetchInterval: 2_000 });
+}
+
+export function useConversation(publicToken: string) {
+  return useQuery({ queryKey: ['conversation', publicToken], queryFn: () => api.getConversation(publicToken), enabled: Boolean(publicToken), refetchInterval: 2_000 });
+}
+
+export function useCreateConversation() {
+  const queryClient = useQueryClient();
+  return useMutation({ mutationFn: (serviceToken: string) => api.createConversation(serviceToken), onSuccess: (chat) => { queryClient.setQueryData(['conversation', chat.public_token], chat); void queryClient.invalidateQueries({ queryKey: ['conversations'] }); } });
+}
+
+export function useCreateOrderConversation() {
+  const queryClient = useQueryClient();
+  return useMutation({ mutationFn: (orderToken: string) => api.createOrderConversation(orderToken), onSuccess: (chat) => { queryClient.setQueryData(['conversation', chat.public_token], chat); void queryClient.invalidateQueries({ queryKey: ['conversations'] }); } });
+}
+
+export function useSendMessage(publicToken: string) {
+  const queryClient = useQueryClient();
+  return useMutation({ mutationFn: (text: string) => api.sendMessage(publicToken, text), onSuccess: (chat) => { queryClient.setQueryData(['conversation', publicToken], chat); void queryClient.invalidateQueries({ queryKey: ['conversations'] }); } });
+}
+
 export function useCreateOrder() {
   const queryClient = useQueryClient();
   return useMutation({
