@@ -56,8 +56,8 @@ export function CalendarScreen() {
                 width: '60px',
                 height: '70px',
                 borderRadius: '12px',
-                border: isSelected ? '2px solid var(--max-color-primary)' : '1px solid var(--max-color-gray-200)',
-                background: isSelected ? 'var(--max-color-primary-light)' : '#fff',
+                border: isSelected ? '2px solid var(--accent)' : '1px solid var(--border)',
+                background: isSelected ? 'var(--accent-soft)' : 'var(--surface)',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -65,12 +65,12 @@ export function CalendarScreen() {
                 position: 'relative'
               }}
             >
-              <span style={{ fontSize: '13px', color: 'var(--max-color-gray-500)' }}>
+              <span style={{ fontSize: '13px', color: 'var(--muted)' }}>
                 {new Intl.DateTimeFormat('ru-RU', { weekday: 'short' }).format(d)}
               </span>
               <strong style={{ fontSize: '18px' }}>{d.getDate()}</strong>
               {hasOrders && (
-                <div style={{ position: 'absolute', bottom: '6px', width: '6px', height: '6px', borderRadius: '50%', background: 'var(--max-color-primary)' }} />
+                <div style={{ position: 'absolute', bottom: '6px', width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent)' }} />
               )}
             </button>
           );
@@ -85,7 +85,7 @@ export function CalendarScreen() {
           {selectedOrders.map(order => <OrderCard key={order.public_token} order={order} />)}
         </div>
       ) : (
-        <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--max-color-gray-500)' }}>
+        <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--muted)' }}>
           <p>На этот день ничего не запланировано.</p>
         </div>
       )}
