@@ -13,7 +13,7 @@ function readImage(file: File, onRead: (value: string) => void) {
 export function ServiceForm({ initial, loading, onSubmit }: { initial?: ServiceDetails; loading: boolean; onSubmit: (input: CreateServiceInput) => void }) {
   const [title, setTitle] = useState(initial?.title ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
-  const [price, setPrice] = useState(initial?.price_from?.replace('.00', '') ?? '');
+  const [price, setPrice] = useState(String(initial?.price_from ?? "").replace('.00', '') ?? '');
   const [duration, setDuration] = useState(String(initial?.duration_minutes ?? 60));
   const [image, setImage] = useState(initial?.image_url ?? null);
   const valid = title.trim().length >= 3 && price !== '' && Number(price) >= 0 && Number(duration) > 0;

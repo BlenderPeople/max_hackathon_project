@@ -28,7 +28,7 @@ export function EditOrderDialog({ open, description: initialDescription, dueAt: 
     <Dialog open={open} title="Детали заказа" description="Изменения сохранятся в истории" onClose={onClose}>
       <form className="dialog-form" onSubmit={(event) => {
         event.preventDefault();
-        onSubmit(description.trim(), dueAt ? new Date(`${dueAt}T18:00:00+07:00`).toISOString() : null, price ? price.replace(',', '.') : null);
+        onSubmit(description.trim(), dueAt ? new Date(`${dueAt}T18:00:00+07:00`).toISOString() : null, price !== '' && price !== null ? String(price).replace(',', '.') : null);
       }}>
         <label><span>Описание</span><Textarea value={description} rows={4}  onChange={(event) => setDescription(event.target.value)} /></label>
         <label><span>Итоговая цена, ₽</span><input className="plain-input" inputMode="decimal" value={price} onChange={(event) => setPrice(event.target.value.replace(',', '.'))} /></label>
