@@ -46,6 +46,7 @@ def my_business(db: Session = Depends(get_db_session), user: User = Depends(curr
 @router.patch("/businesses/me")
 def update_business(body: BusinessInput, db: Session = Depends(get_db_session), user: User = Depends(current_user)) -> dict:
     business = business_for(db, user)
+    business.name = body.name
     business.specialization = body.specialization
     business.experience = body.experience
     business.work_features = body.work_features
@@ -69,6 +70,17 @@ def get_business_services(public_token: str, db: Session = Depends(get_db_sessio
     if business is None:
         raise HTTPException(status_code=404, detail="business not found")
     return [service_view(service) for service in business.services if service.is_active]
+
+
+@router.get("/businesses/search")
+def search_businesses(q: str = Query(..., min_length=1), db: Session = Depends(get_db_session)) -> list[dict]:
+    query = select(Business).join(User, Business.owner_id == User.id).where(
+        Business.name.ilike(f"%{q}%") |
+        User.username.ilike(f"%{q}%") |
+        User.first_name.ilike(f"%{q}%")
+    ).limit(50)
+    businesses = db.scalars(query).all()
+    return [business_view(db, b, include_services=True, include_bookings=False) for b in businesses]
 
 
 @router.get("/businesses/me/schedule", response_model=ScheduleView)

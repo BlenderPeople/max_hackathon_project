@@ -15,6 +15,18 @@ export function useBusiness() {
   return useQuery({ queryKey: ['business'], queryFn: api.getBusiness });
 }
 
+export function useBusinessProfile(publicToken: string) {
+  return useQuery({ queryKey: ['business', publicToken], queryFn: () => api.getBusinessProfile(publicToken) });
+}
+
+export function useSearchBusinesses(query: string) {
+  return useQuery({
+    queryKey: ['search_businesses', query],
+    queryFn: () => api.searchBusinesses(query),
+    enabled: query.length > 0,
+  });
+}
+
 export function useUpdateBusiness() {
   const queryClient = useQueryClient();
   return useMutation({ mutationFn: (input: UpdateBusinessProfileInput) => api.updateBusiness(input), onSuccess: (profile) => { queryClient.setQueryData(['business'], profile); } });

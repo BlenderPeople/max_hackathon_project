@@ -19,10 +19,10 @@ export function CreateOrderForm({ service, isMaster, loading, onSubmit }: Create
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedSlot, setSelectedSlot] = useState<{ start_at: string; end_at: string } | null>(null);
   const slots = useAvailableSlots(service.public_token, selectedDate);
-  const valid = description.trim().length >= 12 && Boolean(selectedSlot) && (!isMaster || Boolean(customerToken.trim()));
+  const valid = Boolean(selectedSlot) && (!isMaster || Boolean(customerToken.trim()));
   useEffect(() => { setSelectedSlot(slots.data?.[0] ?? null); }, [selectedDate, slots.data]);
   const today = new Date().toISOString().slice(0, 10);
-  const formatSlot = (value: string) => new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit' }).format(new Date(value));
+  const formatSlot = (value: string) => new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(value));
   return (
     <form className="create-order-form" onSubmit={(event) => {
       event.preventDefault();
@@ -44,13 +44,12 @@ export function CreateOrderForm({ service, isMaster, loading, onSubmit }: Create
         <span>Что нужно сделать</span>
         <Textarea
           value={description}
-          maxLength={500}
           rows={5}
           placeholder="Например, обрезать три яблони и вывезти ветки"
           aria-describedby="description-hint"
           onChange={(event) => setDescription(event.target.value)}
         />
-        <small id="description-hint">Минимум 12 символов · {description.length}/500</small>
+        <small id="description-hint">Необязательно · {description.length} символов</small>
       </label>
       <label className="form-field">
         <span>Дата визита</span>

@@ -1,4 +1,4 @@
-import { Check, Circle } from 'lucide-react';
+
 
 import type { OrderEvent, OrderStage } from '../api/contracts';
 import { formatDateTime } from '../lib/format';
@@ -15,7 +15,7 @@ export function OrderStages({ stages }: { stages: OrderStage[] }) {
           const active = index === activeIndex;
           return (
             <li key={stage.id} className={completed ? 'is-completed' : active ? 'is-current' : ''}>
-              <span className="stage-marker">{completed ? <Check size={15} /> : <Circle size={11} fill={active ? 'currentColor' : 'none'} />}</span>
+              <span className="stage-marker" />
               <div><strong>{stage.title}</strong><span>{completed ? 'Готово' : active ? 'Текущий этап' : 'Впереди'}</span></div>
             </li>
           );

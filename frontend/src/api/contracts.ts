@@ -39,6 +39,7 @@ export type Order = {
   title: string;
   description: string;
   status: OrderStatus;
+  role: 'master' | 'customer';
   price: string | null;
   due_at: string | null;
   stages: OrderStage[];
@@ -65,7 +66,7 @@ export type OrderFilter = 'all' | 'attention' | 'active' | 'overdue' | 'complete
 
 export type OrderSummary = Pick<
   Order,
-  'public_token' | 'title' | 'description' | 'status' | 'price' | 'due_at' | 'available_actions'
+  'public_token' | 'title' | 'description' | 'status' | 'role' | 'price' | 'due_at' | 'available_actions'
 > & {
   business_name: string;
   customer_name: string;
@@ -143,6 +144,7 @@ export type UpdateOrderInput = {
 };
 
 export type UpdateBusinessProfileInput = {
+  name: string;
   specialization: string;
   experience: string;
   work_features: string;

@@ -1,5 +1,5 @@
 import { Button } from '@maxhub/max-ui';
-import { Check, CheckCircle2, CircleAlert, MessageCircle, Pencil, Play, ReceiptRussianRuble } from 'lucide-react';
+import { Check, CheckCircle2, CircleAlert, MessageCircle, Pencil, Play, RussianRuble } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
@@ -44,7 +44,7 @@ export function OrderScreen() {
   const balance = order.price ? Math.max(0, Number(order.price) - Number(order.amount_paid)) : null;
   const currentStage = order.stages.find((stage) => !stage.completed_at);
   const actionError = decideApproval.error || requestApproval.error || payment.error || activateStage.error || completeOrder.error || updateOrder.error;
-  const scheduledLabel = order.scheduled_start_at ? new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }).format(new Date(order.scheduled_start_at)) : null;
+  const scheduledLabel = order.scheduled_start_at ? new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(order.scheduled_start_at)) : null;
 
   return (
     <div className="order-page">
@@ -83,7 +83,7 @@ export function OrderScreen() {
           <div className="order-actions">
             {order.available_actions.includes('decide_approval') && <Button size="medium" variant="primary" iconBefore={<CheckCircle2 size={19} />} onClick={() => setApprovalOpen(true)}>Согласовать</Button>}
             {order.available_actions.includes('request_approval') && <Button size="medium" variant="primary" iconBefore={<CheckCircle2 size={19} />} loading={requestApproval.isPending} onClick={() => requestApproval.mutate()}>Отправить на согласование</Button>}
-            {order.available_actions.includes('record_payment') && <Button size="medium" variant="primary" iconBefore={<ReceiptRussianRuble size={19} />} onClick={() => setPaymentOpen(true)}>Добавить оплату</Button>}
+            {order.available_actions.includes('record_payment') && <Button size="medium" variant="primary" iconBefore={<RussianRuble size={19} />} onClick={() => setPaymentOpen(true)}>Добавить оплату</Button>}
             {order.available_actions.includes('activate_stage') && currentStage && <Button size="medium" variant="secondary" iconBefore={<Play size={19} />} loading={activateStage.isPending} onClick={() => activateStage.mutate(currentStage.id)}>Завершить этап</Button>}
             {order.available_actions.includes('update') && <Button size="medium" variant="secondary" iconBefore={<Pencil size={19} />} onClick={() => setEditOpen(true)}>Изменить</Button>}
             {order.available_actions.includes('complete') && <Button size="medium" variant="secondary" iconBefore={<Check size={19} />} loading={completeOrder.isPending} onClick={() => completeOrder.mutate()}>Завершить заказ</Button>}

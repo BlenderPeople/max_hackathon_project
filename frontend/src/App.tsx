@@ -11,11 +11,13 @@ import { OrderScreen } from './features/orders/OrderScreen';
 import { OrdersScreen } from './features/orders/OrdersScreen';
 import { ProfileScreen } from './features/profile/ProfileScreen';
 import { ProfileEditScreen } from './features/profile/ProfileEditScreen';
+import { MasterProfileScreen } from './features/profile/MasterProfileScreen';
 import { PublicProfileScreen } from './features/profile/PublicProfileScreen';
 import { ServiceScreen } from './features/services/ServiceScreen';
 import { ServicesScreen } from './features/services/ServicesScreen';
 import { ServiceEditScreen } from './features/services/ServiceEditScreen';
 import { ScheduleScreen } from './features/schedule/ScheduleScreen';
+import { CalendarScreen } from './features/calendar/CalendarScreen';
 import { resolveStartRoute } from './routing/startParam';
 
 function RootRoute() {
@@ -57,10 +59,12 @@ export default function App() {
           <Route path="/" element={<RootRoute />} />
           <Route path="/orders" element={<OrdersScreen />} />
           <Route path="/orders/:publicToken" element={<OrderScreen />} />
+          <Route path="/calendar" element={<CalendarScreen />} />
           <Route path="/services" element={<ServicesScreen />} />
           <Route path="/services/new" element={<ServiceEditScreen />} />
           <Route path="/services/:publicToken" element={<ServiceScreen />} />
           <Route path="/services/:publicToken/master" element={<PublicProfileScreen />} />
+          <Route path="/master/:publicToken" element={<MasterProfileScreen />} />
           <Route path="/services/:publicToken/edit" element={<ServiceEditScreen />} />
           <Route path="/services/:publicToken/create" element={<CreateOrderScreen />} />
           <Route path="/profile" element={<ProfileScreen />} />
