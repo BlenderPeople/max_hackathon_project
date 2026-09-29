@@ -22,7 +22,7 @@ export function CreateOrderForm({ service, isMaster, loading, onSubmit }: Create
   const valid = description.trim().length >= 12 && Boolean(selectedSlot) && (!isMaster || Boolean(customerToken.trim()));
   useEffect(() => { setSelectedSlot(slots.data?.[0] ?? null); }, [selectedDate, slots.data]);
   const today = new Date().toISOString().slice(0, 10);
-  const formatSlot = (value: string) => new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit' }).format(new Date(value));
+  const formatSlot = (value: string) => new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(value));
   return (
     <form className="create-order-form" onSubmit={(event) => {
       event.preventDefault();
