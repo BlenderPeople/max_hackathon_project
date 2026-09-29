@@ -8,14 +8,16 @@ import { formatMoney } from '../lib/format';
 export function ServiceCard({ service, detailed = false }: { service: ServiceDetails; detailed?: boolean }) {
   return (
     <article className={detailed ? 'service-detail' : 'service-card'}>
-      <figure className="service-media">
-        <img src={service.image_url ?? '/assets/tree-pruning.jpg'} alt="Арборист выполняет обрезку дерева" />
-        {detailed && (
-          <figcaption>
-            Фото: TreeMinion15, <a href="https://creativecommons.org/licenses/by-sa/4.0" target="_blank" rel="noreferrer">CC BY-SA 4.0</a>
-          </figcaption>
-        )}
-      </figure>
+      {service.image_url && (
+        <figure className="service-media">
+          <img src={service.image_url} alt="Арборист выполняет обрезку дерева" />
+          {detailed && (
+            <figcaption>
+              Фото: TreeMinion15, <a href="https://creativecommons.org/licenses/by-sa/4.0" target="_blank" rel="noreferrer">CC BY-SA 4.0</a>
+            </figcaption>
+          )}
+        </figure>
+      )}
       <div className="service-copy">
         <div className="service-title-row">
           <div>
