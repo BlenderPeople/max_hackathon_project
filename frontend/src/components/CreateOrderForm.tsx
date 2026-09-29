@@ -44,7 +44,6 @@ export function CreateOrderForm({ service, isMaster, loading, onSubmit }: Create
         <span>Что нужно сделать</span>
         <Textarea
           value={description}
-          maxLength={500}
           rows={5}
           placeholder="Например, обрезать три яблони и вывезти ветки"
           aria-describedby="description-hint"

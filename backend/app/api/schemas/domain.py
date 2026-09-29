@@ -24,7 +24,7 @@ class AuthView(BaseModel):
 
 class ServiceInput(BaseModel):
     title: str = Field(min_length=1, max_length=80)
-    description: str = Field(max_length=500)
+    description: str = Field(max_length=4000)
     price_from: Decimal = Field(ge=0, max_digits=12, decimal_places=2)
     duration_minutes: int = Field(ge=15, le=480)
     image_data_url: str | None = Field(default=None, max_length=2_000_000)
@@ -91,14 +91,14 @@ class AvailableSlot(BaseModel):
 class OrderCreate(BaseModel):
     service_public_token: str
     customer_public_token: str | None = None
-    description: str = Field(min_length=1, max_length=500)
+    description: str = Field(min_length=1, max_length=4000)
     due_at: datetime | None = None
     scheduled_start_at: datetime
     scheduled_end_at: datetime
 
 
 class OrderUpdate(BaseModel):
-    description: str | None = Field(default=None, min_length=1, max_length=500)
+    description: str | None = Field(default=None, min_length=1, max_length=4000)
     due_at: datetime | None = None
     price: Decimal | None = Field(default=None, ge=0, max_digits=12, decimal_places=2)
 
@@ -114,7 +114,7 @@ class ApprovalDecision(BaseModel):
 
 class PaymentInput(BaseModel):
     amount: Decimal = Field(gt=0, max_digits=12, decimal_places=2)
-    comment: str = Field(default="", max_length=500)
+    comment: str = Field(default="", max_length=4000)
 
 
 class OrderStageView(BaseModel):
