@@ -232,7 +232,7 @@ img { display: block; max-width: 100%; }
 .stage-list li { position: relative; display: grid; grid-template-columns: 30px 1fr; gap: 10px; min-height: 52px; }
 .stage-list li:not(:last-child)::after { position: absolute; top: 27px; bottom: 0; left: 14px; width: 1px; background: var(--border); content: ""; }
 .stage-marker { z-index: 1; display: grid; width: 29px; height: 29px; place-items: center; color: var(--faint); background: var(--surface-soft); border: 1px solid var(--border); border-radius: 50%; }
-.stage-list li.is-completed .stage-marker { color: var(--green); background: var(--green-soft); border-color: transparent; }
+.stage-list li.is-completed .stage-marker { background: var(--green); border-color: var(--green); }
 .stage-list li.is-current .stage-marker { color: #fff; background: var(--accent); border-color: var(--accent); }
 .stage-list li div { padding-top: 2px; }
 .stage-list strong, .stage-list span { display: block; }
