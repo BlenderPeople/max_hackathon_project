@@ -46,8 +46,15 @@ export function OrderScreen() {
   const currentStage = order.stages.find((stage) => !stage.completed_at);
   const actionError = decideApproval.error || requestApproval.error || payment.error || activateStage.error || completeOrder.error || updateOrder.error;
   const scheduledLabel = order.scheduled_start_at ? new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(order.scheduled_start_at)) : null;
-  const botName = String(import.meta.env.VITE_MAX_BOT_USERNAME || '').trim().replace(/^@/, '');
-  const discussUrl = botName ? `https://max.ru/${botName}?start=order_${order.public_token}` : null;
+  const masterUsername = order.business_owner_username?.trim().replace(/^@/, '') || null;
+  const discussUrl = masterUsername ? `https://max.ru/${masterUsername}` : null;
+  const discussWithMaster = () => {
+    if (discussUrl) {
+      openMaxLink(discussUrl);
+      return;
+    }
+    window.alert('У мастера не указан публичный username в MAX. Попросите мастера открыть Mini App ещё раз или добавить username в MAX.');
+  };
 
   return (
     <div className="order-page">
@@ -100,7 +107,7 @@ export function OrderScreen() {
       <OrderTimeline events={order.timeline} />
 
       <div className="order-discuss">
-        <Button variant="secondary" size="medium" stretched iconBefore={<MessageCircle size={19} />} disabled={!discussUrl} onClick={() => { if (discussUrl) openMaxLink(discussUrl); }}>
+        <Button variant="secondary" size="medium" stretched iconBefore={<MessageCircle size={19} />} onClick={discussWithMaster}>
           Обсудить в MAX
         </Button>
       </div>

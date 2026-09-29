@@ -82,6 +82,7 @@ def test_signed_login_order_permissions_and_booking_flow() -> None:
             by_handle = http.get("/api/businesses/search", params={"q": "@green_master"})
             assert by_handle.status_code == 200, by_handle.text
             assert by_handle.json()[0]["public_token"] == business_token
+            assert by_handle.json()[0]["owner_username"] == "Green_Master"
             by_name = http.get("/api/businesses/search", params={"q": "User 101"})
             assert by_name.status_code == 200 and by_name.json()[0]["public_token"] == business_token
             assert http.get("/api/businesses/search", params={"q": "@"}).status_code == 422
@@ -106,6 +107,7 @@ def test_signed_login_order_permissions_and_booking_flow() -> None:
                            "scheduled_end_at": slot["end_at"]}
             created = http.post("/api/orders", headers=customer, json=order_input)
             assert created.status_code == 201, created.text
+            assert created.json()["business_owner_username"] == "Green_Master"
             token = created.json()["public_token"]
             public_business = http.get(f"/api/businesses/{business_token}").json()
             assert "bookings" not in public_business["schedule"]

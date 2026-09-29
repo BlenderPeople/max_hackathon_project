@@ -15,12 +15,18 @@ export function ServiceScreen() {
   if (query.isError) return <PageState variant="error" title="Услуга не открылась" description="Ссылка могла устареть. Вернитесь к списку услуг." action={<Button asChild size="small" variant="secondary"><Link to="/services">К услугам</Link></Button>} />;
   const service = query.data;
   const botName = String(import.meta.env.VITE_MAX_BOT_USERNAME || '').trim().replace(/^@/, '');
+  const masterUsername = service.business.owner_username?.trim().replace(/^@/, '') || null;
   const shareUrl = botName
     ? `https://max.ru/${botName}?startapp=service_${service.public_token}`
     : window.location.href;
-  const discussUrl = botName
-    ? `https://max.ru/${botName}?start=service_${service.public_token}`
-    : null;
+  const discussUrl = masterUsername ? `https://max.ru/${masterUsername}` : null;
+  const discussWithMaster = () => {
+    if (discussUrl) {
+      openMaxLink(discussUrl);
+      return;
+    }
+    window.alert('У мастера не указан публичный username в MAX. Попросите мастера открыть Mini App ещё раз или добавить username в MAX.');
+  };
   const shareService = async () => {
     if (navigator.share) {
       try { await navigator.share({ title: service.title, url: shareUrl }); } catch (error) {
@@ -54,7 +60,7 @@ export function ServiceScreen() {
       </section>
       <div className="sticky-actions">
         <Button className="icon-btn" size="medium" variant="secondary" aria-label="Поделиться услугой" onClick={() => void shareService()}><Share2 size={21} /></Button>
-        <Button className="icon-btn" size="medium" variant="secondary" aria-label="Обсудить в MAX" disabled={!discussUrl} onClick={() => { if (discussUrl) openMaxLink(discussUrl); }}><MessageCircle size={21} /></Button>
+        <Button className="icon-btn" size="medium" variant="secondary" aria-label="Открыть чат с мастером в MAX" onClick={discussWithMaster}><MessageCircle size={21} /></Button>
         <Button size="medium" variant="primary" stretched iconAfter={<ArrowRight size={19} />} onClick={() => navigate(`/services/${service.public_token}/create`)}>Заказать</Button>
       </div>
     </div>

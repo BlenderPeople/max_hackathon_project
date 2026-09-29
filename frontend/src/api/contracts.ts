@@ -70,6 +70,7 @@ export type OrderSummary = Pick<
   'public_token' | 'title' | 'description' | 'status' | 'role' | 'price' | 'due_at' | 'available_actions'
 > & {
   business_name: string;
+  business_owner_username: string | null;
   customer_name: string;
   amount_paid: string;
   requires_attention: boolean;
@@ -96,6 +97,7 @@ export type Approval = {
 
 export type OrderDetails = Order & {
   business_name: string;
+  business_owner_username: string | null;
   customer_name: string;
   created_at: string;
   amount_paid: string;
@@ -114,6 +116,7 @@ export type BusinessProfile = {
   experience: string;
   work_features: string;
   owner_name: string;
+  owner_username: string | null;
   avatar_url: string | null;
   rating: number;
   completed_orders: number;
