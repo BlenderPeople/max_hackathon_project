@@ -91,14 +91,14 @@ class AvailableSlot(BaseModel):
 class OrderCreate(BaseModel):
     service_public_token: str
     customer_public_token: str | None = None
-    description: str = Field(min_length=1, max_length=4000)
+    description: str = Field(min_length=0, max_length=4000)
     due_at: datetime | None = None
     scheduled_start_at: datetime
     scheduled_end_at: datetime
 
 
 class OrderUpdate(BaseModel):
-    description: str | None = Field(default=None, min_length=1, max_length=4000)
+    description: str | None = Field(default=None, min_length=0, max_length=4000)
     due_at: datetime | None = None
     price: Decimal | None = Field(default=None, ge=0, max_digits=12, decimal_places=2)
 
