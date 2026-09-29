@@ -25,7 +25,7 @@ export function MasterProfileScreen() {
     <div className="screen public-profile">
       <header className="public-profile-header">
         <Avatar.Container size={82}>
-          {business.avatar_url ? <Avatar.Image src={business.avatar_url} alt="" /> : <Avatar.Text gradient={gradient} style={{ fontSize: '32px' }}>{sticker}</Avatar.Text>}
+          {business.avatar_url ? <Avatar.Image src={business.avatar_url} alt="" /> : <Avatar.Text gradient={gradient} style={{ fontSize: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', lineHeight: 1, paddingBottom: '4px' }}>{sticker}</Avatar.Text>}
         </Avatar.Container>
         <div>
           <h1>{business.owner_name}<BadgeCheck size={20} /></h1>

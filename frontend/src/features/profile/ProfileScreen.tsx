@@ -21,7 +21,7 @@ export function ProfileScreen() {
   return (
     <div className="screen profile-screen">
       <header className="profile-hero">
-        <Avatar.Container size={72}>{query.data.avatar_url ? <Avatar.Image src={query.data.avatar_url} alt="" /> : <Avatar.Text gradient={gradient} style={{ fontSize: '32px' }}>{sticker}</Avatar.Text>}</Avatar.Container>
+        <Avatar.Container size={72}>{query.data.avatar_url ? <Avatar.Image src={query.data.avatar_url} alt="" /> : <Avatar.Text gradient={gradient} style={{ fontSize: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', lineHeight: 1, paddingBottom: '4px' }}>{sticker}</Avatar.Text>}</Avatar.Container>
         <div><h1>{query.data.owner_name}<BadgeCheck size={20} /></h1><span>{query.data.name}</span></div>
       </header>
       <div className="profile-metrics"><div><strong>{query.data.rating.toFixed(1)}</strong><span>рейтинг</span></div><div><strong>{query.data.completed_orders}</strong><span>заказов</span></div><div><strong>20 мин</strong><span>ответ</span></div></div>

@@ -106,7 +106,7 @@ function overlaps(start: number, end: number, otherStart: number, otherEnd: numb
 function toSummary(order: OrderDetails): OrderSummary {
   const due = order.due_at ? new Date(order.due_at).getTime() : Infinity;
   const isOverdue = order.status !== 'done' && due < Date.now();
-  return { public_token: order.public_token, title: order.title, description: order.description, status: order.status, price: order.price, due_at: order.due_at, business_name: order.business_name, customer_name: order.customer_name, amount_paid: order.amount_paid, available_actions: order.available_actions, requires_attention: isOverdue || order.available_actions.includes('decide_approval') || (order.status === 'new' && order.available_actions.includes('update')), is_overdue: isOverdue };
+  return { role: 'master', public_token: order.public_token, title: order.title, description: order.description, status: order.status, price: order.price, due_at: order.due_at, business_name: order.business_name, customer_name: order.customer_name, amount_paid: order.amount_paid, available_actions: order.available_actions, requires_attention: isOverdue || order.available_actions.includes('decide_approval') || (order.status === 'new' && order.available_actions.includes('update')), is_overdue: isOverdue };
 }
 
 export async function mockGetService(publicToken: string): Promise<ServiceDetails> { await delay(); if (publicToken === 'error') throw new Error('Не удалось загрузить услугу'); const item = services.find((service) => service.public_token === publicToken); if (!item) throw new Error('Услуга не найдена'); return structuredClone(serviceView(item)); }
